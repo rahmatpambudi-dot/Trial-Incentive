@@ -15,7 +15,7 @@ client = gspread.authorize(creds)
 
 # Spreadsheet ID dari URL Google Sheets
 # Contoh: https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/edit
-SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID_HERE'
+SPREADSHEET_ID = '1Kilu8Sn6XQrOMxmpna6m7X6hPGCYagl5QxLUFhg8QmE'
 
 spreadsheet = client.open_by_key(SPREADSHEET_ID)
 

@@ -525,6 +525,7 @@ function renderTableDetail(data, rate) {
   let html = `<table><thead><tr>
     <th>Tanggal</th><th>Driver</th><th>BU</th><th>LC Number</th>
     <th>Pairing</th><th>Tipe</th><th>Jalur</th>
+    <th>Deskripsi OT</th>
     <th>OT Jam</th><th>Biaya OT</th>
     <th>Std DP</th><th>Aktual DP</th><th>Gap DP</th>
     <th>TAT</th><th>Insentif</th>
@@ -545,6 +546,7 @@ function renderTableDetail(data, rate) {
       <td>${pBadge}</td>
       <td>${r.delivType||'—'}</td>
       <td>${r.jalur||'—'}</td>
+      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.desc}">${r.desc||'—'}</td>
       <td>${r.otJam.toFixed(2)}</td>
       <td>${fmtS(r.biayaOT)}</td>
       <td>${r.stdDP!=null?r.stdDP:'—'}</td>

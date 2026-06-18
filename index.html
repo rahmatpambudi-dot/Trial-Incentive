@@ -12,7 +12,7 @@
     body { font-family: 'Inter', sans-serif; background: #f0f2f5; color: #1e2a3a; min-height: 100vh; display: flex; }
 
     /* SIDEBAR */
-    .sidebar { width: 220px; min-height: 100vh; background: #1e2d4a; display: flex; flex-direction: column; flex-shrink: 0; }
+    .sidebar { width: 220px; min-height: 100vh; background: #1e2d4a; display: flex; flex-direction: column; flex-shrink: 0; position: sticky; top: 0; height: 100vh; }
     .sidebar-brand { padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 12px; }
     .brand-icon { width: 36px; height: 36px; background: #3b82f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; flex-shrink: 0; }
     .brand-text .brand-name { font-size: 14px; font-weight: 700; color: #fff; }
@@ -26,7 +26,7 @@
 
     /* MAIN */
     .main { flex: 1; display: flex; flex-direction: column; min-height: 100vh; overflow: hidden; }
-    .topbar { background: #fff; border-bottom: 1px solid #e5e8ee; padding: 0 28px; height: 56px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .topbar { background: #fff; border-bottom: 1px solid #e5e8ee; padding: 0 28px; height: 56px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; position: sticky; top: 0; z-index: 10; }
     .topbar-title { font-size: 16px; font-weight: 600; color: #1e2a3a; }
     .topbar-right { display: flex; align-items: center; gap: 10px; }
     .tag { background: #f0f2f5; border: 1px solid #e0e3eb; border-radius: 6px; padding: 5px 12px; font-size: 12px; color: #4b5563; font-weight: 500; }
@@ -34,17 +34,25 @@
     .dot-pulse { width: 7px; height: 7px; border-radius: 50%; background: #10b981; animation: pulse 2s infinite; display: inline-block; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-    /* CONTENT */
-    .content { padding: 24px 28px; flex: 1; overflow-y: auto; }
-
-    /* FILTERS */
-    .filters { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: flex-end; }
+    /* FILTERS BAR */
+    .filters-bar { background: #fff; border-bottom: 1px solid #e5e8ee; padding: 12px 28px; display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; position: sticky; top: 56px; z-index: 9; }
     .filter-group { display: flex; flex-direction: column; gap: 4px; }
-    .filter-group label { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.06em; }
-    select, input[type="date"] { padding: 7px 10px; border-radius: 7px; border: 1px solid #e5e8ee; font-size: 13px; background: #fff; font-family: 'Inter', sans-serif; color: #1e2a3a; cursor: pointer; }
-    input[type="date"] { min-width: 140px; }
+    .filter-group label { font-size: 10px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.06em; }
+    select, input[type="date"] { padding: 6px 10px; border-radius: 7px; border: 1px solid #e5e8ee; font-size: 13px; background: #fff; font-family: 'Inter', sans-serif; color: #1e2a3a; cursor: pointer; height: 34px; }
+    input[type="date"] { min-width: 135px; }
     .date-range { display: flex; align-items: center; gap: 6px; }
     .date-range span { font-size: 12px; color: #9ca3af; }
+
+    /* PAGE TABS */
+    .page-tabs { background: #fff; border-bottom: 1px solid #e5e8ee; padding: 0 28px; display: flex; gap: 0; position: sticky; top: 108px; z-index: 8; }
+    .page-tab { padding: 12px 20px; font-size: 13px; font-weight: 500; color: #9ca3af; cursor: pointer; border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s; white-space: nowrap; }
+    .page-tab:hover { color: #1e2a3a; }
+    .page-tab.active { color: #3b82f6; border-bottom-color: #3b82f6; }
+
+    /* CONTENT */
+    .content { padding: 24px 28px; flex: 1; overflow-y: auto; }
+    .page { display: none; }
+    .page.active { display: block; }
 
     /* KPI */
     .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
@@ -68,20 +76,21 @@
     .legend span { display: flex; align-items: center; gap: 5px; }
     .legend .dot { width: 10px; height: 10px; border-radius: 2px; }
 
-    /* TABLE */
+    /* TABLES */
     .full-card { background: #fff; border: 1px solid #e5e8ee; border-radius: 10px; padding: 20px; margin-bottom: 16px; }
     .full-card h2 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: #9ca3af; margin-bottom: 14px; }
     .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }
-    th { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e5e8ee; color: #9ca3af; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+    th { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e5e8ee; color: #9ca3af; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; background: #fafafa; }
     td { padding: 8px 10px; border-bottom: 0.5px solid #f3f4f6; color: #1e2a3a; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #f9fafb; }
     .badge { display: inline-block; padding: 3px 10px; border-radius: 5px; font-size: 11px; font-weight: 500; }
-    .badge.green { background: #d1fae5; color: #065f46; }
-    .badge.red { background: #fee2e2; color: #991b1b; }
-    .badge.gray { background: #f3f4f6; color: #6b7280; }
-    .badge.blue { background: #dbeafe; color: #1d4ed8; }
+    .badge.green  { background: #d1fae5; color: #065f46; }
+    .badge.red    { background: #fee2e2; color: #991b1b; }
+    .badge.gray   { background: #f3f4f6; color: #6b7280; }
+    .badge.blue   { background: #dbeafe; color: #1d4ed8; }
+    .badge.purple { background: #ede9fe; color: #6d28d9; }
 
     @media (max-width: 900px) {
       .sidebar { display: none; }
@@ -125,86 +134,101 @@
     </div>
   </div>
 
+  <div class="filters-bar">
+    <div class="filter-group">
+      <label>Range Tanggal</label>
+      <div class="date-range">
+        <input type="date" id="filter-date-from">
+        <span>s/d</span>
+        <input type="date" id="filter-date-to">
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>BU</label>
+      <select id="filter-bu"><option value="all">Semua BU</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Jalur</label>
+      <select id="filter-jalur"><option value="all">Semua jalur</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Tipe Delivery</label>
+      <select id="filter-delivery"><option value="all">Semua tipe</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Skenario Insentif</label>
+      <select id="filter-scenario">
+        <option value="34000">Skenario 1 — Rp 34.000/gap DP</option>
+        <option value="51494">Skenario 2 — Rp 51.494/gap DP (rate OT)</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="page-tabs">
+    <div class="page-tab active" onclick="switchPage('overview')">📊 Overview</div>
+    <div class="page-tab" onclick="switchPage('driver')">👤 Rekap Driver</div>
+    <div class="page-tab" onclick="switchPage('detail')">🔍 Detail Pairing</div>
+  </div>
+
   <div class="content">
 
-    <div class="filters">
-      <div class="filter-group">
-        <label>Range Tanggal</label>
-        <div class="date-range">
-          <input type="date" id="filter-date-from">
-          <span>s/d</span>
-          <input type="date" id="filter-date-to">
+    <!-- PAGE 1: OVERVIEW -->
+    <div class="page active" id="page-overview">
+      <div class="kpi-grid">
+        <div class="kpi"><div class="label">Total Biaya OT</div><div class="value" id="kpi-ot">—</div><div class="sub" id="kpi-ot-sub"></div></div>
+        <div class="kpi"><div class="label">Total Insentif DP</div><div class="value" id="kpi-insentif">—</div><div class="sub" id="kpi-insentif-sub"></div></div>
+        <div class="kpi"><div class="label">Saving Perusahaan</div><div class="value" id="kpi-saving">—</div><div class="sub" id="kpi-saving-pct"></div></div>
+        <div class="kpi"><div class="label">Driver Aktif</div><div class="value" id="kpi-driver">—</div><div class="sub" id="kpi-driver-sub"></div></div>
+      </div>
+      <div class="charts-grid">
+        <div class="card">
+          <h2>Biaya OT vs Insentif — Harian</h2>
+          <div class="legend">
+            <span><span class="dot" style="background:#3b82f6"></span>Biaya OT</span>
+            <span><span class="dot" style="background:#10b981"></span>Insentif DP</span>
+          </div>
+          <div class="chart-wrap"><canvas id="chart-daily"></canvas></div>
+        </div>
+        <div class="card">
+          <h2>Gap DP — Distribusi Harian</h2>
+          <div class="legend">
+            <span><span class="dot" style="background:#10b981"></span>Gap positif</span>
+            <span><span class="dot" style="background:#ef4444"></span>Gap negatif</span>
+            <span><span class="dot" style="background:#9ca3af"></span>Impas</span>
+          </div>
+          <div class="chart-wrap"><canvas id="chart-gap"></canvas></div>
         </div>
       </div>
-      <div class="filter-group">
-        <label>BU</label>
-        <select id="filter-bu"><option value="all">Semua BU</option></select>
-      </div>
-      <div class="filter-group">
-        <label>Jalur</label>
-        <select id="filter-jalur"><option value="all">Semua jalur</option></select>
-      </div>
-      <div class="filter-group">
-        <label>Tipe Delivery</label>
-        <select id="filter-delivery"><option value="all">Semua tipe</option></select>
-      </div>
-      <div class="filter-group">
-        <label>Skenario Insentif</label>
-        <select id="filter-scenario">
-          <option value="34000">Skenario 1 — Rp 34.000/gap DP</option>
-          <option value="51494">Skenario 2 — Rp 51.494/gap DP (rate OT)</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="kpi-grid">
-      <div class="kpi"><div class="label">Total Biaya OT</div><div class="value" id="kpi-ot">—</div><div class="sub" id="kpi-ot-sub"></div></div>
-      <div class="kpi"><div class="label">Total Insentif DP</div><div class="value" id="kpi-insentif">—</div><div class="sub" id="kpi-insentif-sub"></div></div>
-      <div class="kpi"><div class="label">Saving Perusahaan</div><div class="value" id="kpi-saving">—</div><div class="sub" id="kpi-saving-pct"></div></div>
-      <div class="kpi"><div class="label">Driver Aktif</div><div class="value" id="kpi-driver">—</div><div class="sub" id="kpi-driver-sub"></div></div>
-    </div>
-
-    <div class="charts-grid">
-      <div class="card">
-        <h2>Biaya OT vs Insentif — Harian</h2>
-        <div class="legend">
-          <span><span class="dot" style="background:#3b82f6"></span>Biaya OT</span>
-          <span><span class="dot" style="background:#10b981"></span>Insentif DP</span>
+      <div class="charts-grid">
+        <div class="card">
+          <h2>DP Aktual vs Standar — Per Jalur</h2>
+          <div class="legend">
+            <span><span class="dot" style="background:#3b82f6"></span>Aktual DP</span>
+            <span><span class="dot" style="background:#f59e0b"></span>Standar DP</span>
+          </div>
+          <div class="chart-wrap-tall"><canvas id="chart-dp-jalur"></canvas></div>
         </div>
-        <div class="chart-wrap"><canvas id="chart-daily"></canvas></div>
-      </div>
-      <div class="card">
-        <h2>Gap DP — Distribusi Harian</h2>
-        <div class="legend">
-          <span><span class="dot" style="background:#10b981"></span>Gap positif</span>
-          <span><span class="dot" style="background:#ef4444"></span>Gap negatif</span>
-          <span><span class="dot" style="background:#9ca3af"></span>Impas</span>
+        <div class="card">
+          <h2>Saving Perusahaan Kumulatif</h2>
+          <div class="chart-wrap-tall"><canvas id="chart-saving"></canvas></div>
         </div>
-        <div class="chart-wrap"><canvas id="chart-gap"></canvas></div>
       </div>
     </div>
 
-    <div class="charts-grid">
-      <div class="card">
-        <h2>DP Aktual vs Standar — Per Jalur</h2>
-        <div class="chart-wrap-tall"><canvas id="chart-dp-jalur"></canvas></div>
-      </div>
-      <div class="card">
-        <h2>Saving Perusahaan Kumulatif</h2>
-        <div class="chart-wrap-tall"><canvas id="chart-saving"></canvas></div>
+    <!-- PAGE 2: REKAP DRIVER -->
+    <div class="page" id="page-driver">
+      <div class="full-card">
+        <h2>Rekap Per Driver</h2>
+        <div class="table-wrap" id="table-driver"><div style="text-align:center;padding:2rem;color:#9ca3af">Memuat...</div></div>
       </div>
     </div>
 
-    <!-- REKAP PER DRIVER -->
-    <div class="full-card">
-      <h2>Rekap Per Driver</h2>
-      <div class="table-wrap" id="table-driver"><div style="text-align:center;padding:2rem;color:#9ca3af;font-size:13px;">Memuat data...</div></div>
-    </div>
-
-    <!-- DETAIL PAIRING -->
-    <div class="full-card">
-      <h2>Detail Pairing LC vs OT & Insentif</h2>
-      <div class="table-wrap" id="table-detail"><div style="text-align:center;padding:2rem;color:#9ca3af;font-size:13px;">Memuat data...</div></div>
+    <!-- PAGE 3: DETAIL PAIRING -->
+    <div class="page" id="page-detail">
+      <div class="full-card">
+        <h2>Detail Pairing LC vs OT & Insentif</h2>
+        <div class="table-wrap" id="table-detail"><div style="text-align:center;padding:2rem;color:#9ca3af">Memuat...</div></div>
+      </div>
     </div>
 
   </div>
@@ -214,20 +238,30 @@
 const LC_CSV = 'data/lc_data.csv';
 const OT_CSV = 'data/ot_data.csv';
 
-const STD_CUSTOMER = {'Bekasi':7,'Karawang Selatan':7,'Jakarta Timur':6,'Jakarta Selatan':5,'Jakarta Utara':5,'Jakarta Barat':5,'Jakarta Pusat':5,'Karawang Utara':5,'Purwakarta':5,'Depok':4,'Bogor':4,'Tangerang':2};
-const STD_STORE_KECIL = {'Bekasi':4,'Karawang Selatan':4,'Jakarta Timur':3,'Jakarta Selatan':3,'Jakarta Barat':3,'Jakarta Pusat':3,'Karawang Utara':3,'Purwakarta':3,'Jakarta Utara':2,'Depok':2,'Bogor':2,'Tangerang':1};
-const STD_STORE_BESAR = {'Bekasi':2,'Karawang Selatan':2,'Jakarta Timur':2,'Jakarta Selatan':1,'Jakarta Utara':1,'Jakarta Barat':1,'Jakarta Pusat':1,'Karawang Utara':1,'Purwakarta':1,'Depok':1,'Bogor':1,'Tangerang':1};
-const STD_LANGSIRAN = {'DC 10':2.9,'DC10':2.9,'DC 5':2.9,'DC5':2.9,'KITTIC':2.0,'KITIC':2.0,'JURONG':2.5,'DELTA 8':2.0,'DELTA8':2.0};
-const ARMADA_BESAR = ['FUSO','WINGBOX','CONT-40'];
-const RATE_OT_PER_JAM = 51494;
+const STD_CUSTOMER   = {'Bekasi':7,'Karawang Selatan':7,'Jakarta Timur':6,'Jakarta Selatan':5,'Jakarta Utara':5,'Jakarta Barat':5,'Jakarta Pusat':5,'Karawang Utara':5,'Purwakarta':5,'Depok':4,'Bogor':4,'Tangerang':2};
+const STD_STORE_KECIL= {'Bekasi':4,'Karawang Selatan':4,'Jakarta Timur':3,'Jakarta Selatan':3,'Jakarta Barat':3,'Jakarta Pusat':3,'Karawang Utara':3,'Purwakarta':3,'Jakarta Utara':2,'Depok':2,'Bogor':2,'Tangerang':1};
+const STD_STORE_BESAR= {'Bekasi':2,'Karawang Selatan':2,'Jakarta Timur':2,'Jakarta Selatan':1,'Jakarta Utara':1,'Jakarta Barat':1,'Jakarta Pusat':1,'Karawang Utara':1,'Purwakarta':1,'Depok':1,'Bogor':1,'Tangerang':1};
+const STD_LANGSIRAN  = {'DC 10':2.9,'DC10':2.9,'DC 5':2.9,'DC5':2.9,'KITTIC':2.0,'KITIC':2.0,'JURONG':2.5,'DELTA 8':2.0,'DELTA8':2.0};
+const ARMADA_BESAR   = ['FUSO','WINGBOX','CONT-40'];
+const RATE_OT_PER_JAM= 51494;
 
 let pairedData = [];
 let chartDaily, chartGap, chartDpJalur, chartSaving;
+let activePage = 'overview';
 
 const fmt  = n => 'Rp ' + Math.round(n).toLocaleString('id-ID');
 const fmtS = n => n >= 1e6 ? 'Rp '+(n/1e6).toFixed(1)+'jt' : 'Rp '+(n/1e3).toFixed(0)+'rb';
-const fmtD = d => { if (!d) return ''; const [y,m,day]=d.split('-'); return `${day}/${m}/${y}`; };
-const fmtL = d => { if (!d) return ''; const [y,m,day]=d.split('-'); return `${day}/${m}`; };
+const fmtD = d => { if(!d) return ''; const [y,m,day]=d.split('-'); return `${day}/${m}/${y}`; };
+const fmtL = d => { if(!d) return ''; const [y,m,day]=d.split('-'); return `${day}/${m}`; };
+
+function switchPage(page) {
+  activePage = page;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelector(`[onclick="switchPage('${page}')"]`).classList.add('active');
+  renderAll();
+}
 
 function extractBU(orgName) {
   if (!orgName) return 'Unknown';
@@ -263,38 +297,37 @@ function pairData(lcData, otData) {
   const lcByNik = {};
   lcData.forEach(r => {
     const id = String(r.DriverId||'').trim();
-    const dt = r.PLANDELIVERYDATE ? String(r.PLANDELIVERYDATE).slice(0,10) : '';
+    const dt = String(r.PLANDELIVERYDATE||'').slice(0,10);
     if (!lcByNik[id+'|'+dt]) lcByNik[id+'|'+dt] = r;
   });
 
   return otData.map(ot => {
-    const desc = ot.Description||'';
-    const m = desc.match(/\(LC:\s*([A-Z0-9]+)\)/);
-    const lcNo = m ? m[1].trim() : null;
-    const otDate = String(ot['OT Date']||'').slice(0,10);
+    const desc  = ot.Description||'';
+    const m     = desc.match(/\(LC:\s*([A-Z0-9]+)\)/);
+    const lcNo  = m ? m[1].trim() : null;
+    const otDate= String(ot['OT Date']||'').slice(0,10);
     const empId = String(ot['Employee ID']||'').trim();
-    const orgName = ot['Organization Name']||'';
-    const bu = extractBU(orgName);
+    const bu    = extractBU(ot['Organization Name']||'');
 
     let lc = null, matchMethod = 'No Match';
     if (lcNo && lcIdx[lcNo]) { lc = lcIdx[lcNo]; matchMethod = 'LC Number'; }
     else { const fb = lcByNik[empId+'|'+otDate]; if(fb) { lc=fb; matchMethod='NIK + Date'; } }
 
-    const jalur = lc ? lc.JALUR : '';
-    const armada = lc ? lc['TIPE ARMADA'] : '';
-    const aktualDP = lc ? Number(lc['DP (STOP)']) : null;
+    const jalur   = lc ? lc.JALUR : '';
+    const armada  = lc ? lc['TIPE ARMADA'] : '';
+    const aktualDP= lc ? Number(lc['DP (STOP)']) : null;
     const delivType = getDeliveryType(lcNo, desc);
-    const stdDP = getStdDP(delivType, jalur, armada, desc);
-    const gapDP = (aktualDP!=null && stdDP!=null) ? aktualDP-stdDP : null;
-    const otH = Number(ot['Total OT Hour']||0);
-    const otM = Number(ot['minute(s)']||0);
-    const otJam = otH + otM/60;
+    const stdDP   = getStdDP(delivType, jalur, armada, desc);
+    const gapDP   = (aktualDP!=null && stdDP!=null) ? aktualDP-stdDP : null;
+    const otH     = Number(ot['Total OT Hour']||0);
+    const otM     = Number(ot['minute(s)']||0);
+    const otJam   = otH + otM/60;
     const biayaOT = otJam * RATE_OT_PER_JAM;
+    const tat     = lc ? lc.TAT : '';
 
     return { empId, empName:ot['Employee Name']||'', otDate, otJam, biayaOT,
-             bu, orgName, desc, lcNo, matchMethod,
-             jalur, armada, delivType, stdDP, aktualDP, gapDP,
-             tat: lc ? lc.TAT : '' };
+             bu, desc, lcNo, matchMethod, jalur, armada, delivType,
+             stdDP, aktualDP, gapDP, tat };
   });
 }
 
@@ -303,19 +336,19 @@ function computeInsentif(row, rate) { return (row.gapDP!=null && row.gapDP>0) ? 
 function setDateRangeBounds(data) {
   const dates = [...new Set(data.map(r=>r.otDate).filter(Boolean))].sort();
   if (!dates.length) return;
-  const minDate = dates[0], maxDate = dates[dates.length-1];
+  const min = dates[0], max = dates[dates.length-1];
   const fromEl = document.getElementById('filter-date-from');
-  const toEl = document.getElementById('filter-date-to');
-  fromEl.min = minDate; fromEl.max = maxDate; fromEl.value = minDate;
-  toEl.min = minDate; toEl.max = maxDate; toEl.value = maxDate;
-  document.getElementById('badge-data-range').textContent = `📅 ${fmtD(minDate)} — ${fmtD(maxDate)}`;
-  document.getElementById('badge-update').innerHTML = `<span class="dot-pulse"></span>Update: ${fmtD(maxDate)}`;
+  const toEl   = document.getElementById('filter-date-to');
+  fromEl.min = min; fromEl.max = max; fromEl.value = min;
+  toEl.min   = min; toEl.max   = max; toEl.value   = max;
+  document.getElementById('badge-data-range').textContent = `📅 ${fmtD(min)} — ${fmtD(max)}`;
+  document.getElementById('badge-update').innerHTML = `<span class="dot-pulse"></span>Update: ${fmtD(max)}`;
 }
 
 function populateFilters(data) {
-  const bus = [...new Set(data.map(r=>r.bu).filter(b=>b&&b!=='Unknown'))].sort();
-  const jalurs = [...new Set(data.map(r=>r.jalur).filter(Boolean))].sort();
-  const delivs = [...new Set(data.map(r=>r.delivType).filter(Boolean))].sort();
+  const bus   = [...new Set(data.map(r=>r.bu).filter(b=>b&&b!=='Unknown'))].sort();
+  const jalurs= [...new Set(data.map(r=>r.jalur).filter(Boolean))].sort();
+  const delivs= [...new Set(data.map(r=>r.delivType).filter(Boolean))].sort();
   const fBU = document.getElementById('filter-bu');
   bus.forEach(b => { const o=document.createElement('option'); o.value=b; o.textContent=b; fBU.appendChild(o); });
   const fJ = document.getElementById('filter-jalur');
@@ -325,11 +358,11 @@ function populateFilters(data) {
 }
 
 function filterData() {
-  const from = document.getElementById('filter-date-from').value||'';
-  const to   = document.getElementById('filter-date-to').value||'';
-  const bu   = document.getElementById('filter-bu').value;
-  const jalur= document.getElementById('filter-jalur').value;
-  const deliv= document.getElementById('filter-delivery').value;
+  const from  = document.getElementById('filter-date-from').value||'';
+  const to    = document.getElementById('filter-date-to').value||'';
+  const bu    = document.getElementById('filter-bu').value;
+  const jalur = document.getElementById('filter-jalur').value;
+  const deliv = document.getElementById('filter-delivery').value;
   return pairedData.filter(r =>
     (!from||r.otDate>=from) && (!to||r.otDate<=to) &&
     (bu==='all'||r.bu===bu) &&
@@ -341,34 +374,33 @@ function filterData() {
 function getRate() { return Number(document.getElementById('filter-scenario').value); }
 
 function renderKPI(data, rate) {
-  const totalOT  = data.reduce((s,r)=>s+r.biayaOT,0);
-  const totalIns = data.reduce((s,r)=>s+computeInsentif(r,rate),0);
-  const saving   = totalOT-totalIns;
-  const drivers  = new Set(data.map(r=>r.empId)).size;
-  const days     = new Set(data.map(r=>r.otDate)).size;
-  document.getElementById('kpi-ot').textContent       = fmtS(totalOT);
-  document.getElementById('kpi-ot-sub').textContent   = `${data.length} baris OT`;
-  document.getElementById('kpi-insentif').textContent = fmtS(totalIns);
+  const totalOT = data.reduce((s,r)=>s+r.biayaOT,0);
+  const totalIns= data.reduce((s,r)=>s+computeInsentif(r,rate),0);
+  const saving  = totalOT-totalIns;
+  const drivers = new Set(data.map(r=>r.empId)).size;
+  const days    = new Set(data.map(r=>r.otDate)).size;
+  document.getElementById('kpi-ot').textContent        = fmtS(totalOT);
+  document.getElementById('kpi-ot-sub').textContent    = `${data.length} baris OT`;
+  document.getElementById('kpi-insentif').textContent  = fmtS(totalIns);
   document.getElementById('kpi-insentif-sub').textContent = `Rp ${rate.toLocaleString('id-ID')}/gap DP`;
-  document.getElementById('kpi-saving').textContent   = fmtS(saving);
-  document.getElementById('kpi-saving-pct').textContent = totalOT>0 ? `${(saving/totalOT*100).toFixed(1)}% lebih hemat` : '';
-  document.getElementById('kpi-driver').textContent   = drivers;
-  document.getElementById('kpi-driver-sub').textContent = `${days} hari`;
+  document.getElementById('kpi-saving').textContent    = fmtS(saving);
+  document.getElementById('kpi-saving-pct').textContent= totalOT>0?`${(saving/totalOT*100).toFixed(1)}% lebih hemat`:'';
+  document.getElementById('kpi-driver').textContent    = drivers;
+  document.getElementById('kpi-driver-sub').textContent= `${days} hari`;
 }
 
 function renderChartDaily(data, rate) {
   const byDate = {};
   data.forEach(r => {
-    if (!r.otDate) return;
-    if (!byDate[r.otDate]) byDate[r.otDate]={ot:0,ins:0};
+    if(!r.otDate) return;
+    if(!byDate[r.otDate]) byDate[r.otDate]={ot:0,ins:0};
     byDate[r.otDate].ot  += r.biayaOT;
     byDate[r.otDate].ins += computeInsentif(r,rate);
   });
   const labels = Object.keys(byDate).sort();
   if (chartDaily) chartDaily.destroy();
   chartDaily = new Chart(document.getElementById('chart-daily'),{
-    type:'bar',
-    data:{labels:labels.map(fmtL), datasets:[
+    type:'bar', data:{labels:labels.map(fmtL), datasets:[
       {label:'Biaya OT',   data:labels.map(d=>Math.round(byDate[d].ot)),  backgroundColor:'#3b82f6',borderRadius:3},
       {label:'Insentif DP',data:labels.map(d=>Math.round(byDate[d].ins)), backgroundColor:'#10b981',borderRadius:3},
     ]},
@@ -382,8 +414,8 @@ function renderChartDaily(data, rate) {
 function renderChartGap(data) {
   const byDate = {};
   data.forEach(r => {
-    if (!r.otDate||r.gapDP==null) return;
-    if (!byDate[r.otDate]) byDate[r.otDate]={pos:0,neg:0,zero:0};
+    if(!r.otDate||r.gapDP==null) return;
+    if(!byDate[r.otDate]) byDate[r.otDate]={pos:0,neg:0,zero:0};
     if(r.gapDP>0) byDate[r.otDate].pos++;
     else if(r.gapDP<0) byDate[r.otDate].neg++;
     else byDate[r.otDate].zero++;
@@ -391,8 +423,7 @@ function renderChartGap(data) {
   const labels = Object.keys(byDate).sort();
   if (chartGap) chartGap.destroy();
   chartGap = new Chart(document.getElementById('chart-gap'),{
-    type:'bar',
-    data:{labels:labels.map(fmtL), datasets:[
+    type:'bar', data:{labels:labels.map(fmtL), datasets:[
       {label:'Gap positif',data:labels.map(d=>byDate[d].pos), backgroundColor:'#10b981',borderRadius:3},
       {label:'Gap negatif',data:labels.map(d=>byDate[d].neg), backgroundColor:'#ef4444',borderRadius:3},
       {label:'Impas',      data:labels.map(d=>byDate[d].zero),backgroundColor:'#9ca3af',borderRadius:3},
@@ -414,8 +445,7 @@ function renderChartDpJalur(data) {
   const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
   if (chartDpJalur) chartDpJalur.destroy();
   chartDpJalur = new Chart(document.getElementById('chart-dp-jalur'),{
-    type:'bar',
-    data:{labels, datasets:[
+    type:'bar', data:{labels, datasets:[
       {label:'Aktual DP', data:labels.map(j=>+avg(byJalur[j].aktual).toFixed(1)),backgroundColor:'#3b82f6',borderRadius:3},
       {label:'Standar DP',data:labels.map(j=>+avg(byJalur[j].std).toFixed(1)),   backgroundColor:'#f59e0b',borderRadius:3},
     ]},
@@ -429,8 +459,8 @@ function renderChartDpJalur(data) {
 function renderChartSaving(data, rate) {
   const byDate = {};
   data.forEach(r => {
-    if (!r.otDate) return;
-    if (!byDate[r.otDate]) byDate[r.otDate]={saving:0};
+    if(!r.otDate) return;
+    if(!byDate[r.otDate]) byDate[r.otDate]={saving:0};
     byDate[r.otDate].saving += r.biayaOT - computeInsentif(r,rate);
   });
   const labels = Object.keys(byDate).sort();
@@ -438,9 +468,11 @@ function renderChartSaving(data, rate) {
   const vals = labels.map(d => { cumul+=byDate[d].saving; return Math.round(cumul); });
   if (chartSaving) chartSaving.destroy();
   chartSaving = new Chart(document.getElementById('chart-saving'),{
-    type:'line',
-    data:{labels:labels.map(fmtL), datasets:[{label:'Saving kumulatif',data:vals,
-      borderColor:'#10b981',backgroundColor:'rgba(16,185,129,0.08)',fill:true,tension:0.3,pointRadius:3}]},
+    type:'line', data:{labels:labels.map(fmtL), datasets:[{
+      label:'Saving kumulatif',data:vals,
+      borderColor:'#10b981',backgroundColor:'rgba(16,185,129,0.08)',
+      fill:true,tension:0.3,pointRadius:3
+    }]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`Saving: ${fmt(ctx.raw)}`}}},
       scales:{x:{ticks:{font:{size:10},maxRotation:45},grid:{display:false}},
@@ -451,15 +483,18 @@ function renderChartSaving(data, rate) {
 function renderTableDriver(data, rate) {
   const byDriver = {};
   data.forEach(r => {
-    if (!byDriver[r.empId]) byDriver[r.empId]={name:r.empName,bu:r.bu,ot:0,ins:0,hari:0};
+    if(!byDriver[r.empId]) byDriver[r.empId]={name:r.empName,bu:r.bu,ot:0,ins:0,hari:0,gapPos:0,gapNeg:0};
     byDriver[r.empId].ot  += r.biayaOT;
     byDriver[r.empId].ins += computeInsentif(r,rate);
     byDriver[r.empId].hari++;
+    if(r.gapDP>0) byDriver[r.empId].gapPos++;
+    else if(r.gapDP!=null&&r.gapDP<0) byDriver[r.empId].gapNeg++;
   });
   const rows = Object.values(byDriver).map(d=>({...d,selisih:d.ins-d.ot})).sort((a,b)=>b.ot-a.ot);
   let html = `<table><thead><tr>
-    <th>Driver</th><th>BU</th><th>Hari OT</th><th>Biaya OT</th>
-    <th>Insentif DP</th><th>Gap OT vs Insentif</th><th>Status</th>
+    <th>Driver</th><th>BU</th><th>Hari OT</th>
+    <th>Biaya OT</th><th>Insentif DP</th>
+    <th>Gap OT vs Insentif</th><th>Gap DP+</th><th>Gap DP-</th><th>Status</th>
   </tr></thead><tbody>`;
   rows.forEach(r => {
     const status = r.selisih>0
@@ -468,9 +503,16 @@ function renderTableDriver(data, rate) {
         ? '<span class="badge gray">Seimbang</span>'
         : '<span class="badge green">Efisien</span>';
     html += `<tr>
-      <td>${r.name}</td><td><span class="badge blue">${r.bu}</span></td>
-      <td>${r.hari}</td><td>${fmtS(r.ot)}</td><td>${fmtS(r.ins)}</td>
-      <td style="color:${r.selisih>=0?'#991b1b':'#065f46'}">${fmtS(Math.abs(r.selisih))} ${r.selisih>=0?'↑':'↓'}</td>
+      <td>${r.name}</td>
+      <td><span class="badge blue">${r.bu}</span></td>
+      <td>${r.hari}</td>
+      <td>${fmtS(r.ot)}</td>
+      <td>${fmtS(r.ins)}</td>
+      <td style="color:${r.selisih>=0?'#991b1b':'#065f46'};font-weight:500">
+        ${fmtS(Math.abs(r.selisih))} ${r.selisih>=0?'↑':'↓'}
+      </td>
+      <td style="color:#065f46">${r.gapPos}</td>
+      <td style="color:#991b1b">${r.gapNeg}</td>
       <td>${status}</td>
     </tr>`;
   });
@@ -481,24 +523,26 @@ function renderTableDriver(data, rate) {
 function renderTableDetail(data, rate) {
   const rows = data.slice().sort((a,b)=>a.otDate.localeCompare(b.otDate));
   let html = `<table><thead><tr>
-    <th>Tanggal</th><th>Driver</th><th>BU</th><th>LC Number</th><th>Pairing</th>
-    <th>Tipe</th><th>Jalur</th><th>OT Jam</th><th>Biaya OT</th>
-    <th>Std DP</th><th>Aktual DP</th><th>Gap DP</th><th>Insentif</th>
+    <th>Tanggal</th><th>Driver</th><th>BU</th><th>LC Number</th>
+    <th>Pairing</th><th>Tipe</th><th>Jalur</th>
+    <th>OT Jam</th><th>Biaya OT</th>
+    <th>Std DP</th><th>Aktual DP</th><th>Gap DP</th>
+    <th>TAT</th><th>Insentif</th>
   </tr></thead><tbody>`;
   rows.forEach(r => {
     const ins = computeInsentif(r, rate);
-    const gapColor = r.gapDP==null ? '#9ca3af' : r.gapDP>0 ? '#065f46' : r.gapDP<0 ? '#991b1b' : '#6b7280';
-    const pairingBadge = r.matchMethod==='LC Number'
+    const gapColor = r.gapDP==null?'#9ca3af':r.gapDP>0?'#065f46':r.gapDP<0?'#991b1b':'#6b7280';
+    const pBadge = r.matchMethod==='LC Number'
       ? '<span class="badge green">LC</span>'
       : r.matchMethod==='NIK + Date'
-        ? '<span class="badge blue">NIK</span>'
+        ? '<span class="badge purple">NIK</span>'
         : '<span class="badge gray">—</span>';
     html += `<tr>
       <td>${fmtD(r.otDate)}</td>
       <td>${r.empName}</td>
       <td><span class="badge blue">${r.bu}</span></td>
       <td style="font-family:monospace;font-size:11px">${r.lcNo||'—'}</td>
-      <td>${pairingBadge}</td>
+      <td>${pBadge}</td>
       <td>${r.delivType||'—'}</td>
       <td>${r.jalur||'—'}</td>
       <td>${r.otJam.toFixed(2)}</td>
@@ -506,6 +550,7 @@ function renderTableDetail(data, rate) {
       <td>${r.stdDP!=null?r.stdDP:'—'}</td>
       <td>${r.aktualDP!=null?r.aktualDP:'—'}</td>
       <td style="color:${gapColor};font-weight:500">${r.gapDP!=null?r.gapDP:'—'}</td>
+      <td style="font-size:11px;color:#6b7280">${r.tat||'—'}</td>
       <td>${ins>0?fmtS(ins):'—'}</td>
     </tr>`;
   });
@@ -517,12 +562,16 @@ function renderAll() {
   const filtered = filterData();
   const rate = getRate();
   renderKPI(filtered, rate);
-  renderChartDaily(filtered, rate);
-  renderChartGap(filtered);
-  renderChartDpJalur(filtered);
-  renderChartSaving(filtered, rate);
-  renderTableDriver(filtered, rate);
-  renderTableDetail(filtered, rate);
+  if (activePage==='overview') {
+    renderChartDaily(filtered, rate);
+    renderChartGap(filtered);
+    renderChartDpJalur(filtered);
+    renderChartSaving(filtered, rate);
+  } else if (activePage==='driver') {
+    renderTableDriver(filtered, rate);
+  } else if (activePage==='detail') {
+    renderTableDetail(filtered, rate);
+  }
 }
 
 async function loadData() {

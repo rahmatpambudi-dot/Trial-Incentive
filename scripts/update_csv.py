@@ -4,11 +4,9 @@ import json
 import os
 from google.oauth2.service_account import Credentials
 
-# Load credentials dari GitHub Secret
 creds_json = os.environ['GOOGLE_CREDENTIALS']
 creds_dict = json.loads(creds_json)
 
-# Auth
 scopes = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
 client = gspread.authorize(creds)
@@ -26,7 +24,6 @@ LC_COLS = [
 print("Pulling LC data (tab: DATA)...")
 ws_lc = spreadsheet.worksheet('DATA')
 df_lc = pd.DataFrame(ws_lc.get_all_records())
-# Ambil hanya kolom yang ada
 lc_cols_exist = [c for c in LC_COLS if c in df_lc.columns]
 df_lc = df_lc[lc_cols_exist]
 df_lc.to_csv('data/lc_data.csv', index=False)
@@ -39,12 +36,33 @@ OT_COLS = [
 ]
 print("Pulling OT data (tab: Overtime)...")
 ws_ot = spreadsheet.worksheet('Overtime')
-df_ot_raw = pd.DataFrame(ws_ot.get_all_records())
 
-# Flexible mapping — cari kolom menit (bisa beda nama)
+# Ambil raw values untuk handle duplikat header
+all_values = ws_ot.get_all_values()
+if not all_values:
+    raise Exception("Tab Overtime kosong")
+
+# Pakai baris pertama sebagai header, deduplicate
+raw_headers = all_values[0]
+seen = {}
+clean_headers = []
+for h in raw_headers:
+    h = h.strip()
+    if h == '' or h in seen:
+        seen[h] = seen.get(h, 0) + 1
+        clean_headers.append(f"_col_{len(clean_headers)}")
+    else:
+        seen[h] = 1
+        clean_headers.append(h)
+
+df_ot_raw = pd.DataFrame(all_values[1:], columns=clean_headers)
+df_ot_raw = df_ot_raw.replace('', None)
+
+# Flexible mapping kolom menit
 minute_col = None
 for c in df_ot_raw.columns:
-    if 'menit' in c.lower() or 'minute' in c.lower() or 'unnamed: 29' in c.lower():
+    cl = c.lower()
+    if 'menit' in cl or 'minute' in cl or 'unnamed: 29' in cl:
         minute_col = c
         break
 

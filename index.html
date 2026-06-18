@@ -364,9 +364,11 @@ function renderChartDaily(data, rate) {
     byDate[r.otDate].ins += computeInsentif(r,rate);
   });
   const labels = Object.keys(byDate).sort();
+  const fmtLabel = d => { const [y,m,day]=d.split('-'); return `${day}/${m}`; };
+  const displayLabels = labels.map(fmtLabel);
   if (chartDaily) chartDaily.destroy();
   chartDaily = new Chart(document.getElementById('chart-daily'),{
-    type:'bar', data:{labels, datasets:[
+    type:'bar', data:{labels:displayLabels, datasets:[
       {label:'Biaya OT',data:labels.map(d=>Math.round(byDate[d].ot)),backgroundColor:'#3b82f6',borderRadius:3},
       {label:'Insentif DP',data:labels.map(d=>Math.round(byDate[d].ins)),backgroundColor:'#10b981',borderRadius:3},
     ]},
@@ -385,9 +387,10 @@ function renderChartGap(data) {
     else byDate[r.otDate].zero++;
   });
   const labels = Object.keys(byDate).sort();
+  const fmtL = d => { const [y,m,day]=d.split('-'); return `${day}/${m}`; };
   if (chartGap) chartGap.destroy();
   chartGap = new Chart(document.getElementById('chart-gap'),{
-    type:'bar', data:{labels, datasets:[
+    type:'bar', data:{labels:labels.map(fmtL), datasets:[
       {label:'Gap positif',data:labels.map(d=>byDate[d].pos),backgroundColor:'#10b981',borderRadius:3},
       {label:'Gap negatif',data:labels.map(d=>byDate[d].neg),backgroundColor:'#ef4444',borderRadius:3},
       {label:'Impas',data:labels.map(d=>byDate[d].zero),backgroundColor:'#9ca3af',borderRadius:3},
@@ -425,11 +428,12 @@ function renderChartSaving(data, rate) {
     byDate[r.otDate].saving += r.biayaOT - computeInsentif(r,rate);
   });
   const labels = Object.keys(byDate).sort();
+  const fmtLS = d => { const [y,m,day]=d.split('-'); return `${day}/${m}`; };
   let cumul = 0;
   const vals = labels.map(d => { cumul+=byDate[d].saving; return Math.round(cumul); });
   if (chartSaving) chartSaving.destroy();
   chartSaving = new Chart(document.getElementById('chart-saving'),{
-    type:'line', data:{labels, datasets:[{label:'Saving kumulatif',data:vals,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,0.08)',fill:true,tension:0.3,pointRadius:3}]},
+    type:'line', data:{labels:labels.map(fmtLS), datasets:[{label:'Saving kumulatif',data:vals,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,0.08)',fill:true,tension:0.3,pointRadius:3}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`Saving: ${fmt(ctx.raw)}`}}},
       scales:{x:{ticks:{font:{size:10},maxRotation:45},grid:{display:false}},y:{ticks:{callback:v=>'Rp '+(v/1e6).toFixed(1)+'jt',font:{size:10}},grid:{color:'rgba(0,0,0,0.05)'}}}}
   });

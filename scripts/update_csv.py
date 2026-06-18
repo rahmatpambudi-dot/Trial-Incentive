@@ -5,7 +5,7 @@ import os
 from google.oauth2.service_account import Credentials
 
 # Load credentials dari GitHub Secret
-creds_json = os.environ['GDRIVE_CREDENTIALS']
+creds_json = os.environ['GOOGLE_CREDENTIALS']
 creds_dict = json.loads(creds_json)
 
 # Auth

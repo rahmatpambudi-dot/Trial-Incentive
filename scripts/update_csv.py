@@ -50,7 +50,8 @@ print(f"LC data: {len(df_lc)} rows")
 # ── OT DATA ──────────────────────────────────────────────
 OT_COLS = [
     'Employee ID', 'Employee Name', 'OT Date', 'Day Name',
-    'Total OT Hour', 'minute(s)', 'Status', 'Description', 'Location Name'
+    'Total OT Hour', 'minute(s)', 'Status', 'Description', 'Location Name',
+    'Organization Name'
 ]
 print("Pulling OT data (tab: Overtime)...")
 ws_ot = spreadsheet.worksheet('Overtime')

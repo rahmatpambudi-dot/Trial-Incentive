@@ -79,9 +79,9 @@
     /* TABLES */
     .full-card { background: #fff; border: 1px solid #e5e8ee; border-radius: 10px; padding: 20px; margin-bottom: 16px; }
     .full-card h2 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: #9ca3af; margin-bottom: 14px; }
-    .table-wrap { overflow-x: auto; }
+    .table-wrap { overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 240px); }
     table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }
-    th { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e5e8ee; color: #9ca3af; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; background: #fafafa; }
+    th { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e5e8ee; color: #9ca3af; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; background: #fafafa; position: sticky; top: 0; z-index: 2; }
     td { padding: 8px 10px; border-bottom: 0.5px solid #f3f4f6; color: #1e2a3a; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #f9fafb; }

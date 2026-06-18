@@ -371,7 +371,7 @@ function renderTable(data, rate) {
   const rows = Object.entries(byDriver).map(([id,d])=>({...d,id,selisih:d.ins-d.ot})).sort((a,b)=>b.ot-a.ot);
   let html = `<table><thead><tr><th>Driver</th><th>Hari OT</th><th>Biaya OT</th><th>Insentif DP</th><th>Gap OT vs Insentif</th><th>Status</th></tr></thead><tbody>`;
   rows.forEach(r => {
-    const status = r.selisih>0 ? '<span class="badge green">Untung</span>' : r.selisih===0 ? '<span class="badge gray">Impas</span>' : '<span class="badge red">Rugi</span>';
+    const status = r.selisih>0 ? '<span class="badge red">Perlu Review</span>' : r.selisih===0 ? '<span class="badge gray">Seimbang</span>' : '<span class="badge green">Efisien</span>';
     html += `<tr><td>${r.name}</td><td>${r.hariOT}</td><td>${fmtShort(r.ot)}</td><td>${fmtShort(r.ins)}</td><td style="color:${r.selisih>=0?'#0f6e56':'#993c1d'}">${fmtShort(Math.abs(r.selisih))} ${r.selisih>=0?'↑':'↓'}</td><td>${status}</td></tr>`;
   });
   html += '</tbody></table>';

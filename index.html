@@ -232,6 +232,39 @@
       </div>
     </div>
 
+    <!-- PAGE 4: DATA ANOMALI -->
+    <div class="page" id="page-anomali">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+        <div class="kpi" style="border-top:3px solid #ef4444">
+          <div class="label">TAT Corrupt (1108xxx)</div>
+          <div class="value" id="count-corrupt">—</div>
+          <div class="sub">baris di Data LC</div>
+        </div>
+        <div class="kpi" style="border-top:3px solid #f59e0b">
+          <div class="label">TAT Tidak Wajar (&gt; 24 jam)</div>
+          <div class="value" id="count-tat-high">—</div>
+          <div class="sub">baris di Data LC</div>
+        </div>
+        <div class="kpi" style="border-top:3px solid #8b5cf6">
+          <div class="label">OT Unmatch LC</div>
+          <div class="value" id="count-unmatch">—</div>
+          <div class="sub">baris OT tidak terpair</div>
+        </div>
+      </div>
+      <div class="full-card">
+        <h2>TAT Corrupt — Nilai 1108xxx (Data Error di Sheets)</h2>
+        <div class="table-wrap" id="table-corrupt"><div style="text-align:center;padding:2rem;color:#9ca3af">Memuat...</div></div>
+      </div>
+      <div class="full-card">
+        <h2>TAT Tidak Wajar — Lebih dari 24 Jam</h2>
+        <div class="table-wrap" id="table-tat-high"><div style="text-align:center;padding:2rem;color:#9ca3af">Memuat...</div></div>
+      </div>
+      <div class="full-card">
+        <h2>OT Tidak Terpair ke LC</h2>
+        <div class="table-wrap" id="table-unmatch"><div style="text-align:center;padding:2rem;color:#9ca3af">Memuat...</div></div>
+      </div>
+    </div>
+
   </div>
 </div>
 

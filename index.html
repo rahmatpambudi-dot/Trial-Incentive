@@ -168,6 +168,7 @@
     <div class="page-tab active" onclick="switchPage('overview')">📊 Overview</div>
     <div class="page-tab" onclick="switchPage('driver')">👤 Rekap Driver</div>
     <div class="page-tab" onclick="switchPage('detail')">🔍 Detail Pairing</div>
+    <div class="page-tab" onclick="switchPage('anomali')">⚠️ Data Anomali</div>
   </div>
 
   <div class="content">
@@ -573,7 +574,89 @@ function renderAll() {
     renderTableDriver(filtered, rate);
   } else if (activePage==='detail') {
     renderTableDetail(filtered, rate);
+  } else if (activePage==='anomali') {
+    renderAnomali();
   }
+}
+
+function tatToHours(tat) {
+  if (!tat) return null;
+  const parts = String(tat).split(':');
+  if (parts.length < 2) return null;
+  return parseInt(parts[0]) + parseInt(parts[1])/60 + (parseInt(parts[2]||0)/3600);
+}
+
+function renderAnomali() {
+  if (!window._rawLC || !window._rawOT) return;
+  const lc = window._rawLC;
+  const ot = window._rawOT;
+
+  // 1. TAT Corrupt: nilai jam > 100000
+  const corrupt = lc.filter(r => {
+    const h = tatToHours(r.TAT);
+    return h !== null && h > 100000;
+  });
+
+  // 2. TAT > 24 jam tapi bukan corrupt
+  const tatHigh = lc.filter(r => {
+    const h = tatToHours(r.TAT);
+    return h !== null && h > 24 && h <= 100000;
+  });
+
+  // 3. OT Unmatch — baris yang LC_Extracted tidak ada di LC data
+  const lcTransnos = new Set(lc.map(r => r.TRANSNO));
+  const unmatch = pairedData.filter(r => r.matchMethod === 'No Match');
+
+  // Update counters
+  document.getElementById('count-corrupt').textContent = corrupt.length;
+  document.getElementById('count-tat-high').textContent = tatHigh.length;
+  document.getElementById('count-unmatch').textContent = unmatch.length;
+
+  // Table corrupt
+  let h1 = `<table><thead><tr><th>TRANSNO</th><th>Driver</th><th>Tanggal</th><th>TAT Raw</th><th>TAT (Jam)</th></tr></thead><tbody>`;
+  corrupt.forEach(r => {
+    const jam = tatToHours(r.TAT);
+    h1 += `<tr>
+      <td style="font-family:monospace;font-size:11px">${r.TRANSNO}</td>
+      <td>${r.DriverName||'—'}</td>
+      <td>${r.PLANDELIVERYDATE||'—'}</td>
+      <td style="color:#ef4444;font-family:monospace">${r.TAT}</td>
+      <td style="color:#ef4444">${jam ? jam.toFixed(0)+' jam' : '—'}</td>
+    </tr>`;
+  });
+  h1 += '</tbody></table>';
+  document.getElementById('table-corrupt').innerHTML = corrupt.length ? h1 : '<div style="text-align:center;padding:1.5rem;color:#9ca3af;font-size:13px">Tidak ada data corrupt ✓</div>';
+
+  // Table TAT high
+  let h2 = `<table><thead><tr><th>TRANSNO</th><th>Driver</th><th>Tanggal</th><th>TAT Raw</th><th>TAT (Jam)</th></tr></thead><tbody>`;
+  tatHigh.forEach(r => {
+    const jam = tatToHours(r.TAT);
+    h2 += `<tr>
+      <td style="font-family:monospace;font-size:11px">${r.TRANSNO}</td>
+      <td>${r.DriverName||'—'}</td>
+      <td>${r.PLANDELIVERYDATE||'—'}</td>
+      <td style="color:#f59e0b;font-family:monospace">${r.TAT}</td>
+      <td style="color:#f59e0b">${jam ? jam.toFixed(1)+' jam' : '—'}</td>
+    </tr>`;
+  });
+  h2 += '</tbody></table>';
+  document.getElementById('table-tat-high').innerHTML = tatHigh.length ? h2 : '<div style="text-align:center;padding:1.5rem;color:#9ca3af;font-size:13px">Tidak ada TAT > 24 jam ✓</div>';
+
+  // Table unmatch OT
+  let h3 = `<table><thead><tr><th>Tanggal OT</th><th>Driver</th><th>BU</th><th>LC Extracted</th><th>Deskripsi OT</th><th>OT Jam</th><th>Biaya OT</th></tr></thead><tbody>`;
+  unmatch.forEach(r => {
+    h3 += `<tr>
+      <td>${fmtD(r.otDate)}</td>
+      <td>${r.empName}</td>
+      <td><span class="badge blue">${r.bu||'—'}</span></td>
+      <td style="font-family:monospace;font-size:11px;color:#9ca3af">${r.lcNo||'—'}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.desc}">${r.desc||'—'}</td>
+      <td>${r.otJam.toFixed(2)}</td>
+      <td>${fmtS(r.biayaOT)}</td>
+    </tr>`;
+  });
+  h3 += '</tbody></table>';
+  document.getElementById('table-unmatch').innerHTML = unmatch.length ? h3 : '<div style="text-align:center;padding:1.5rem;color:#9ca3af;font-size:13px">Semua OT terpair ✓</div>';
 }
 
 async function loadData() {
@@ -587,6 +670,8 @@ async function loadData() {
     const [lcText, otText] = await Promise.all([lcRes.text(), otRes.text()]);
     const rawLC = Papa.parse(lcText,{header:true,skipEmptyLines:true}).data;
     const rawOT = Papa.parse(otText,{header:true,skipEmptyLines:true}).data;
+    window._rawLC = rawLC;
+    window._rawOT = rawOT;
     pairedData = pairData(rawLC, rawOT);
     setDateRangeBounds(pairedData);
     populateFilters(pairedData);

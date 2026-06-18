@@ -51,7 +51,7 @@
     .filters { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: flex-end; }
     .filter-group { display: flex; flex-direction: column; gap: 4px; }
     .filter-group label { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.06em; }
-    select, input[type="date"] { padding: 7px 10px; border-radius: 7px; border: 1px solid #e5e8ee; font-size: 13px; background: #fff; font-family: 'Inter', sans-serif; color: #1e2a3a; }
+    select { padding: 7px 10px; border-radius: 7px; border: 1px solid #e5e8ee; font-size: 13px; background: #fff; font-family: 'Inter', sans-serif; color: #1e2a3a; }
     .date-range { display: flex; align-items: center; gap: 6px; }
     .date-range span { font-size: 12px; color: #9ca3af; }
 
@@ -159,9 +159,9 @@
         <div class="filter-group">
           <label>Range Tanggal</label>
           <div class="date-range">
-            <input type="date" id="filter-date-from">
+            <select id="filter-date-from" style="min-width:130px"><option value="">Dari...</option></select>
             <span>s/d</span>
-            <input type="date" id="filter-date-to">
+            <select id="filter-date-to" style="min-width:130px"><option value="">Sampai...</option></select>
           </div>
         </div>
         <div class="filter-group">
@@ -308,11 +308,22 @@ function setDateRangeBounds(data) {
   const dates = [...new Set(data.map(r=>r.otDate).filter(Boolean))].sort();
   if (!dates.length) return;
   const minDate = dates[0], maxDate = dates[dates.length-1];
+  const fmtD = d => { const [y,m,day]=d.split('-'); return `${day}/${m}/${y}`; };
+
   const fromEl = document.getElementById('filter-date-from');
   const toEl = document.getElementById('filter-date-to');
-  fromEl.min = minDate; fromEl.max = maxDate; fromEl.value = minDate;
-  toEl.min = minDate; toEl.max = maxDate; toEl.value = maxDate;
-  const fmtD = d => { const [y,m,day]=d.split('-'); return `${day}/${m}/${y}`; };
+
+  // Populate dropdowns
+  fromEl.innerHTML = '';
+  toEl.innerHTML = '';
+  dates.forEach(d => {
+    const labelD = fmtD(d);
+    const o1 = document.createElement('option'); o1.value=d; o1.textContent=labelD; fromEl.appendChild(o1);
+    const o2 = document.createElement('option'); o2.value=d; o2.textContent=labelD; toEl.appendChild(o2);
+  });
+  fromEl.value = minDate;
+  toEl.value = maxDate;
+
   document.getElementById('badge-data-range').textContent = `📅 ${fmtD(minDate)} — ${fmtD(maxDate)}`;
   document.getElementById('badge-update').innerHTML = `<span class="dot-pulse"></span>Update: ${fmtD(maxDate)}`;
 }
@@ -327,8 +338,8 @@ function populateFilters(data) {
 }
 
 function filterData() {
-  const from = document.getElementById('filter-date-from').value;
-  const to = document.getElementById('filter-date-to').value;
+  const from = document.getElementById('filter-date-from').value || '';
+  const to = document.getElementById('filter-date-to').value || '';
   const jalur = document.getElementById('filter-jalur').value;
   const deliv = document.getElementById('filter-delivery').value;
   return pairedData.filter(r =>

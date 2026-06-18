@@ -565,6 +565,7 @@ function renderAll() {
   const filtered = filterData();
   const rate = getRate();
   renderKPI(filtered, rate);
+  if (activePage==='anomali') { renderAnomali(); return; }
   if (activePage==='overview') {
     renderChartDaily(filtered, rate);
     renderChartGap(filtered);
@@ -574,8 +575,6 @@ function renderAll() {
     renderTableDriver(filtered, rate);
   } else if (activePage==='detail') {
     renderTableDetail(filtered, rate);
-  } else if (activePage==='anomali') {
-    renderAnomali();
   }
 }
 
@@ -587,7 +586,12 @@ function tatToHours(tat) {
 }
 
 function renderAnomali() {
-  if (!window._rawLC || !window._rawOT) return;
+  if (!window._rawLC || !window._rawOT || !pairedData.length) {
+    ['table-corrupt','table-tat-high','table-unmatch'].forEach(id => {
+      document.getElementById(id).innerHTML = '<div style="text-align:center;padding:1.5rem;color:#9ca3af;font-size:13px">Data belum dimuat...</div>';
+    });
+    return;
+  }
   const lc = window._rawLC;
   const ot = window._rawOT;
 

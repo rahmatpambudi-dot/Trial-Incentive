@@ -348,8 +348,15 @@ function pairData(lcData, otData) {
 
   return otData.map(ot => {
     const desc  = ot.Description||'';
-    const m     = desc.match(/\(LC:\s*([A-Z0-9]+)\)/);
-    const lcNo  = m ? m[1].trim() : null;
+    let lcNo = null;
+    const mOld = desc.match(/\(LC:\s*([A-Z0-9]+)\)/);
+    if (mOld) {
+      lcNo = mOld[1].trim();
+    } else {
+      // New format: (RIT 1: XXX, RIT 2: YYY or -)
+      const allRits = extractRitLCs(desc);
+      if (allRits.length) lcNo = allRits[0]; // pakai RIT 1 sebagai LC utama untuk non-Ritase
+    }
     const otDate= String(ot['OT Date']||'').slice(0,10);
     const empId = String(ot['Employee ID']||'').trim();
     const bu    = extractBU(ot['Organization Name']||'');

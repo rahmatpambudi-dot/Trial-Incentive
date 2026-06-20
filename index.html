@@ -719,10 +719,18 @@ function renderAnomali() {
   const lcTransnos = new Set(lc.map(r => r.TRANSNO));
   const unmatch = pairedData.filter(r => r.matchMethod === 'No Match');
 
+  // 4. Kategori Mismatch — deskripsi punya pola 2 LC (RIT 1, RIT 2 keduanya terisi) tapi bukan RITASE
+  const mismatch = pairedData.filter(r => {
+    if (r.isRitase) return false;
+    const rits = extractRitLCs(r.desc);
+    return rits.length >= 2;
+  });
+
   // Update counters
   document.getElementById('count-corrupt').textContent = corrupt.length;
   document.getElementById('count-tat-high').textContent = tatHigh.length;
   document.getElementById('count-unmatch').textContent = unmatch.length;
+  document.getElementById('count-mismatch').textContent = mismatch.length;
 
   // Table corrupt
   let h1 = `<table><thead><tr><th>TRANSNO</th><th>Driver</th><th>Tanggal</th><th>TAT Raw</th><th>TAT (Jam)</th></tr></thead><tbody>`;
@@ -769,6 +777,22 @@ function renderAnomali() {
   });
   h3 += '</tbody></table>';
   document.getElementById('table-unmatch').innerHTML = unmatch.length ? h3 : '<div style="text-align:center;padding:1.5rem;color:#9ca3af;font-size:13px">Semua OT terpair ✓</div>';
+
+  // Table mismatch
+  let h4 = `<table><thead><tr><th>Tanggal</th><th>Driver</th><th>BU</th><th>Kategori Overtime (Input)</th><th>Deskripsi OT</th><th>LC Terdeteksi</th></tr></thead><tbody>`;
+  mismatch.forEach(r => {
+    const rits = extractRitLCs(r.desc);
+    h4 += `<tr>
+      <td>${fmtD(r.otDate)}</td>
+      <td>${r.empName}</td>
+      <td><span class="badge blue">${r.bu||'—'}</span></td>
+      <td><span class="badge red">${r.kategoriOT||'(kosong)'}</span></td>
+      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.desc}">${r.desc||'—'}</td>
+      <td style="font-family:monospace;font-size:11px">${rits.join(', ')}</td>
+    </tr>`;
+  });
+  h4 += '</tbody></table>';
+  document.getElementById('table-mismatch').innerHTML = mismatch.length ? h4 : '<div style="text-align:center;padding:1.5rem;color:#9ca3af;font-size:13px">Tidak ada mismatch kategori ✓</div>';
 }
 
 async function loadData() {

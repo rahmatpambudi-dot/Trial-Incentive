@@ -82,6 +82,9 @@
     .table-wrap { overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 240px); }
     table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }
     th { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e5e8ee; color: #9ca3af; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; background: #fafafa; position: sticky; top: 0; z-index: 2; }
+    #table-detail table th:nth-child(1), #table-detail table td:nth-child(1) { position: sticky; left: 0; z-index: 1; background: #fff; }
+    #table-detail table th:nth-child(2), #table-detail table td:nth-child(2) { position: sticky; left: 90px; z-index: 1; background: #fff; box-shadow: 2px 0 4px -2px rgba(0,0,0,0.08); }
+    #table-detail table th:nth-child(1), #table-detail table th:nth-child(2) { z-index: 3; background: #fafafa; }
     td { padding: 8px 10px; border-bottom: 0.5px solid #f3f4f6; color: #1e2a3a; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #f9fafb; }

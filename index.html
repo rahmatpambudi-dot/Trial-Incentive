@@ -600,7 +600,11 @@ function renderTableDetail(data, rate) {
     <th>Deskripsi OT</th>
     <th>OT Jam</th><th>Biaya OT</th>
     <th>Std DP</th><th>Aktual DP</th><th>Gap DP</th>
-    <th>TAT</th><th>Insentif</th>
+    <th>TAT</th>
+    <th id="th-lc-list">LC 1</th><th id="th-lc2">LC 2</th>
+    <th id="th-tat1">TAT 1</th><th id="th-tat2">TAT 2</th>
+    <th id="th-total-tat">Total TAT</th><th id="th-gap-tat">Gap TAT</th>
+    <th>Insentif</th>
   </tr></thead><tbody>`;
   rows.forEach(r => {
     const ins = computeInsentif(r, rate);
@@ -626,6 +630,12 @@ function renderTableDetail(data, rate) {
       <td>${r.aktualDP!=null?r.aktualDP:'—'}</td>
       <td style="color:${gapColor};font-weight:500">${r.gapDP!=null?r.gapDP:'—'}</td>
       <td style="font-size:11px;color:#6b7280">${r.tat||'—'}</td>
+      <td style="font-family:monospace;font-size:11px">${r.isRitase ? (r.ritLCs[0]||'—') : '—'}</td>
+      <td style="font-family:monospace;font-size:11px">${r.isRitase ? (r.ritLCs[1]||'—') : '—'}</td>
+      <td>${r.isRitase && r.ritTATs[0]!=null ? r.ritTATs[0].toFixed(2)+' jam' : '—'}</td>
+      <td>${r.isRitase && r.ritTATs[1]!=null ? r.ritTATs[1].toFixed(2)+' jam' : '—'}</td>
+      <td style="font-weight:500">${r.isRitase && r.totalTAT!=null ? r.totalTAT.toFixed(2)+' jam' : '—'}</td>
+      <td style="font-weight:500;color:${r.isRitase && r.gapTAT!=null ? (r.gapTAT>0?'#065f46':'#991b1b') : '#9ca3af'}">${r.isRitase && r.gapTAT!=null ? r.gapTAT.toFixed(2)+' jam' : '—'}</td>
       <td>${ins>0?fmtS(ins):'—'}</td>
     </tr>`;
   });

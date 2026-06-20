@@ -48,7 +48,6 @@ def read_sheet_robust(worksheet):
 
     df = pd.DataFrame(all_values[1:], columns=clean_headers)
     df = df.replace('', None)
-    # Drop baris yang seluruhnya kosong (row kosong antar BU)
     df = df.dropna(how='all')
     return df
 
@@ -65,7 +64,6 @@ df_lc_raw = read_sheet_robust(ws_lc)
 lc_cols_exist = [c for c in LC_COLS if c in df_lc_raw.columns]
 df_lc = df_lc_raw[lc_cols_exist].copy()
 
-# Drop baris tanpa TRANSNO (row kosong/invalid)
 if 'TRANSNO' in df_lc.columns:
     df_lc = df_lc[df_lc['TRANSNO'].notna() & (df_lc['TRANSNO'] != '')]
 
@@ -106,4 +104,27 @@ if 'OT Date' in df_ot.columns:
 
 df_ot.to_csv('data/ot_data.csv', index=False)
 print(f"OT data: {len(df_ot)} rows, kolom: {list(df_ot.columns)}")
+
+# ── KLS HO DATA (untuk fallback pairing LC khusus BU KLS) ──
+KLS_HO_COLS = ['Tanggal', 'NIK', 'Nama', 'NO LC']
+print("Pulling KLS HO data (tab: KLS HO)...")
+try:
+    ws_klsho = spreadsheet.worksheet('KLS HO')
+    df_klsho_raw = read_sheet_robust(ws_klsho)
+    klsho_cols_exist = [c for c in KLS_HO_COLS if c in df_klsho_raw.columns]
+    df_klsho = df_klsho_raw[klsho_cols_exist].copy()
+
+    if 'NIK' in df_klsho.columns:
+        df_klsho = df_klsho[df_klsho['NIK'].notna() & (df_klsho['NIK'] != '')]
+        df_klsho['NIK'] = df_klsho['NIK'].astype(str).str.replace(' ', '').str.strip()
+
+    if 'Tanggal' in df_klsho.columns:
+        df_klsho['Tanggal'] = df_klsho['Tanggal'].apply(excel_serial_to_date)
+
+    df_klsho.to_csv('data/kls_ho_data.csv', index=False)
+    print(f"KLS HO data: {len(df_klsho)} rows, kolom: {list(df_klsho.columns)}")
+except Exception as e:
+    print(f"KLS HO tab tidak ditemukan atau error: {e}")
+    pd.DataFrame(columns=KLS_HO_COLS).to_csv('data/kls_ho_data.csv', index=False)
+
 print("Done.")

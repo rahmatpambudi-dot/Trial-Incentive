@@ -24,7 +24,7 @@ def excel_serial_to_date(val):
     except:
         pass
     try:
-        return pd.to_datetime(str(val)).strftime('%Y-%m-%d')
+        return pd.to_datetime(str(val), dayfirst=True).strftime('%Y-%m-%d')
     except:
         return val
 

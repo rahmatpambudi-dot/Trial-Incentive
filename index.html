@@ -382,7 +382,9 @@ function pairData(lcData, otData) {
       ritLCs = extractRitLCs(desc);
       ritTATs = ritLCs.map(lcCode => {
         const lcRow = lcIdx[lcCode];
-        return lcRow ? tatToHours(lcRow.TAT) : null;
+        const h = lcRow ? tatToHours(lcRow.TAT) : null;
+        // Sanity check: TAT wajar maksimal 24 jam, di atas itu data corrupt
+        return (h !== null && h <= 24) ? h : null;
       });
       const validTATs = ritTATs.filter(t => t !== null && t !== undefined);
       totalTAT = validTATs.length ? validTATs.reduce((a,b)=>a+b,0) : null;

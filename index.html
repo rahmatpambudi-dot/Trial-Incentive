@@ -720,8 +720,12 @@ function renderAnomali() {
   const unmatch = pairedData.filter(r => r.matchMethod === 'No Match');
 
   // 4. Kategori Mismatch — deskripsi punya pola 2 LC (RIT 1, RIT 2 keduanya terisi) tapi bukan RITASE
+  // Exclude LANGSIR dan PROJECT karena 2 LC memang valid untuk kategori tersebut
+  const EXCLUDED_FROM_MISMATCH = ['LANGSIR', 'PROJECT'];
   const mismatch = pairedData.filter(r => {
     if (r.isRitase) return false;
+    const kat = (r.kategoriOT||'').toUpperCase().trim();
+    if (EXCLUDED_FROM_MISMATCH.includes(kat)) return false;
     const rits = extractRitLCs(r.desc);
     return rits.length >= 2;
   });

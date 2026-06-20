@@ -19,33 +19,61 @@ def excel_serial_to_date(val):
     """Convert Excel serial number to YYYY-MM-DD string"""
     try:
         serial = int(float(str(val)))
-        if serial > 40000:  # sanity check: valid Excel date
+        if serial > 40000:
             return (date(1899, 12, 30) + timedelta(days=serial)).strftime('%Y-%m-%d')
     except:
         pass
-    # Already a string date or unrecognized
     try:
         return pd.to_datetime(str(val)).strftime('%Y-%m-%d')
     except:
         return val
+
+def read_sheet_robust(worksheet):
+    """Baca sheet pakai get_all_values - robust terhadap row/header kosong dan duplikat."""
+    all_values = worksheet.get_all_values()
+    if not all_values:
+        raise Exception(f"Sheet {worksheet.title} kosong")
+
+    raw_headers = all_values[0]
+    seen = {}
+    clean_headers = []
+    for h in raw_headers:
+        h = h.strip()
+        if h == '' or h in seen:
+            seen[h] = seen.get(h, 0) + 1
+            clean_headers.append(f"_col_{len(clean_headers)}")
+        else:
+            seen[h] = 1
+            clean_headers.append(h)
+
+    df = pd.DataFrame(all_values[1:], columns=clean_headers)
+    df = df.replace('', None)
+    # Drop baris yang seluruhnya kosong (row kosong antar BU)
+    df = df.dropna(how='all')
+    return df
 
 # ── LC DATA ──────────────────────────────────────────────
 LC_COLS = [
     'TRANSNO', 'PLANDELIVERYDATE', 'AREA', 'TIPE ARMADA', 'JALUR',
     'KATEGORI KIRIMAN', 'DriverId', 'DriverName',
     'DP (STOP)', 'Check Out', 'DP1', 'LastDP', 'Tiba di DC',
-    'Travel Time ', '1st - Last DP', 'TAT'
+    'Travel Time ', '1st - Last DP', 'TAT', 'Owner'
 ]
 print("Pulling LC data (tab: DATA)...")
 ws_lc = spreadsheet.worksheet('DATA')
-df_lc = pd.DataFrame(ws_lc.get_all_records())
-lc_cols_exist = [c for c in LC_COLS if c in df_lc.columns]
-df_lc = df_lc[lc_cols_exist]
-# Normalize PLANDELIVERYDATE
+df_lc_raw = read_sheet_robust(ws_lc)
+lc_cols_exist = [c for c in LC_COLS if c in df_lc_raw.columns]
+df_lc = df_lc_raw[lc_cols_exist].copy()
+
+# Drop baris tanpa TRANSNO (row kosong/invalid)
+if 'TRANSNO' in df_lc.columns:
+    df_lc = df_lc[df_lc['TRANSNO'].notna() & (df_lc['TRANSNO'] != '')]
+
 if 'PLANDELIVERYDATE' in df_lc.columns:
     df_lc['PLANDELIVERYDATE'] = df_lc['PLANDELIVERYDATE'].apply(excel_serial_to_date)
+
 df_lc.to_csv('data/lc_data.csv', index=False)
-print(f"LC data: {len(df_lc)} rows")
+print(f"LC data: {len(df_lc)} rows, kolom: {list(df_lc.columns)}")
 
 # ── OT DATA ──────────────────────────────────────────────
 OT_COLS = [
@@ -55,26 +83,8 @@ OT_COLS = [
 ]
 print("Pulling OT data (tab: Overtime)...")
 ws_ot = spreadsheet.worksheet('Overtime')
-all_values = ws_ot.get_all_values()
-if not all_values:
-    raise Exception("Tab Overtime kosong")
+df_ot_raw = read_sheet_robust(ws_ot)
 
-raw_headers = all_values[0]
-seen = {}
-clean_headers = []
-for h in raw_headers:
-    h = h.strip()
-    if h == '' or h in seen:
-        seen[h] = seen.get(h, 0) + 1
-        clean_headers.append(f"_col_{len(clean_headers)}")
-    else:
-        seen[h] = 1
-        clean_headers.append(h)
-
-df_ot_raw = pd.DataFrame(all_values[1:], columns=clean_headers)
-df_ot_raw = df_ot_raw.replace('', None)
-
-# Flexible mapping kolom menit
 minute_col = None
 for c in df_ot_raw.columns:
     cl = c.lower()
@@ -87,11 +97,13 @@ if minute_col and minute_col != 'minute(s)':
 ot_cols_exist = [c for c in OT_COLS if c in df_ot_raw.columns]
 df_ot = df_ot_raw[ot_cols_exist].copy()
 
-# Convert OT Date dari serial ke string
+if 'Employee ID' in df_ot.columns:
+    df_ot = df_ot[df_ot['Employee ID'].notna() & (df_ot['Employee ID'] != '')]
+
 if 'OT Date' in df_ot.columns:
     df_ot['OT Date'] = df_ot['OT Date'].apply(excel_serial_to_date)
     print(f"Sample OT Date: {df_ot['OT Date'].head(3).tolist()}")
 
 df_ot.to_csv('data/ot_data.csv', index=False)
-print(f"OT data: {len(df_ot)} rows")
+print(f"OT data: {len(df_ot)} rows, kolom: {list(df_ot.columns)}")
 print("Done.")

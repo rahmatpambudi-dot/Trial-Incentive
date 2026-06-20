@@ -253,11 +253,6 @@
           <div class="value" id="count-unmatch">—</div>
           <div class="sub">baris OT tidak terpair</div>
         </div>
-        <div class="kpi" style="border-top:3px solid #ec4899">
-          <div class="label">Kategori Mismatch</div>
-          <div class="value" id="count-mismatch">—</div>
-          <div class="sub">deskripsi 2 LC tapi bukan RITASE</div>
-        </div>
       </div>
       <div class="full-card">
         <h2>TAT Corrupt — Nilai 1108xxx (Data Error di Sheets)</h2>
@@ -272,14 +267,6 @@
         <div class="table-wrap" id="table-unmatch"><div style="text-align:center;padding:2rem;color:#9ca3af">Memuat...</div></div>
       </div>
 
-      <div class="full-card">
-        <h2>Kategori Overtime Mismatch — Deskripsi 2 LC tapi Bukan RITASE</h2>
-        <p style="font-size:12px;color:#9ca3af;margin-bottom:12px">
-          Deskripsi mengandung pola "RIT 1, RIT 2" (2 LC) namun kolom Kategori Overtime di Sheets bukan RITASE.
-          Kemungkinan salah input kategori oleh tim lapangan.
-        </p>
-        <div class="table-wrap" id="table-mismatch"><div style="text-align:center;padding:2rem;color:#9ca3af">Memuat...</div></div>
-      </div>
     </div>
 
   </div>
@@ -719,22 +706,12 @@ function renderAnomali() {
   const lcTransnos = new Set(lc.map(r => r.TRANSNO));
   const unmatch = pairedData.filter(r => r.matchMethod === 'No Match');
 
-  // 4. Kategori Mismatch — deskripsi punya pola 2 LC (RIT 1, RIT 2 keduanya terisi) tapi bukan RITASE
-  // Exclude LANGSIR dan PROJECT karena 2 LC memang valid untuk kategori tersebut
-  const EXCLUDED_FROM_MISMATCH = ['LANGSIR', 'PROJECT'];
-  const mismatch = pairedData.filter(r => {
-    if (r.isRitase) return false;
-    const kat = (r.kategoriOT||'').toUpperCase().trim();
-    if (EXCLUDED_FROM_MISMATCH.includes(kat)) return false;
-    const rits = extractRitLCs(r.desc);
-    return rits.length >= 2;
-  });
+
 
   // Update counters
   document.getElementById('count-corrupt').textContent = corrupt.length;
   document.getElementById('count-tat-high').textContent = tatHigh.length;
   document.getElementById('count-unmatch').textContent = unmatch.length;
-  document.getElementById('count-mismatch').textContent = mismatch.length;
 
   // Table corrupt
   let h1 = `<table><thead><tr><th>TRANSNO</th><th>Driver</th><th>Tanggal</th><th>TAT Raw</th><th>TAT (Jam)</th></tr></thead><tbody>`;
@@ -781,22 +758,6 @@ function renderAnomali() {
   });
   h3 += '</tbody></table>';
   document.getElementById('table-unmatch').innerHTML = unmatch.length ? h3 : '<div style="text-align:center;padding:1.5rem;color:#9ca3af;font-size:13px">Semua OT terpair ✓</div>';
-
-  // Table mismatch
-  let h4 = `<table><thead><tr><th>Tanggal</th><th>Driver</th><th>BU</th><th>Kategori Overtime (Input)</th><th>Deskripsi OT</th><th>LC Terdeteksi</th></tr></thead><tbody>`;
-  mismatch.forEach(r => {
-    const rits = extractRitLCs(r.desc);
-    h4 += `<tr>
-      <td>${fmtD(r.otDate)}</td>
-      <td>${r.empName}</td>
-      <td><span class="badge blue">${r.bu||'—'}</span></td>
-      <td><span class="badge red">${r.kategoriOT||'(kosong)'}</span></td>
-      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.desc}">${r.desc||'—'}</td>
-      <td style="font-family:monospace;font-size:11px">${rits.join(', ')}</td>
-    </tr>`;
-  });
-  h4 += '</tbody></table>';
-  document.getElementById('table-mismatch').innerHTML = mismatch.length ? h4 : '<div style="text-align:center;padding:1.5rem;color:#9ca3af;font-size:13px">Tidak ada mismatch kategori ✓</div>';
 }
 
 async function loadData() {

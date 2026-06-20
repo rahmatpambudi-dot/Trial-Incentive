@@ -342,6 +342,7 @@ function pairData(lcData, otData) {
     const otDate= String(ot['OT Date']||'').slice(0,10);
     const empId = String(ot['Employee ID']||'').trim();
     const bu    = extractBU(ot['Organization Name']||'');
+    const siteBu = ot['Site BU']||'';
 
     let lc = null, matchMethod = 'No Match';
     if (lcNo && lcIdx[lcNo]) { lc = lcIdx[lcNo]; matchMethod = 'LC Number'; }
@@ -360,7 +361,7 @@ function pairData(lcData, otData) {
     const tat     = lc ? lc.TAT : '';
 
     return { empId, empName:ot['Employee Name']||'', otDate, otJam, biayaOT,
-             bu, desc, lcNo, matchMethod, jalur, armada, delivType,
+             bu, siteBu, desc, lcNo, matchMethod, jalur, armada, delivType,
              stdDP, aktualDP, gapDP, tat };
   });
 }
@@ -557,7 +558,7 @@ function renderTableDriver(data, rate) {
 function renderTableDetail(data, rate) {
   const rows = data.slice().sort((a,b)=>a.otDate.localeCompare(b.otDate));
   let html = `<table><thead><tr>
-    <th>Tanggal</th><th>Driver</th><th>BU</th><th>LC Number</th>
+    <th>Tanggal</th><th>Driver</th><th>BU</th><th>Site BU</th><th>LC Number</th>
     <th>Pairing</th><th>Tipe</th><th>Jalur</th>
     <th>Deskripsi OT</th>
     <th>OT Jam</th><th>Biaya OT</th>
@@ -576,6 +577,7 @@ function renderTableDetail(data, rate) {
       <td>${fmtD(r.otDate)}</td>
       <td>${r.empName}</td>
       <td><span class="badge blue">${r.bu}</span></td>
+      <td>${r.siteBu||'—'}</td>
       <td style="font-family:monospace;font-size:11px">${r.lcNo||'—'}</td>
       <td>${pBadge}</td>
       <td>${r.delivType||'—'}</td>

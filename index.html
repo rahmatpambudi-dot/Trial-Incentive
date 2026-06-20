@@ -275,6 +275,7 @@
 <script>
 const LC_CSV = 'data/lc_data.csv';
 const OT_CSV = 'data/ot_data.csv';
+const KLS_HO_CSV = 'data/kls_ho_data.csv';
 
 const STD_CUSTOMER   = {'Bekasi':7,'Karawang Selatan':7,'Jakarta Timur':6,'Jakarta Selatan':5,'Jakarta Utara':5,'Jakarta Barat':5,'Jakarta Pusat':5,'Karawang Utara':5,'Purwakarta':5,'Depok':4,'Bogor':4,'Tangerang':2};
 const STD_STORE_KECIL= {'Bekasi':4,'Karawang Selatan':4,'Jakarta Timur':3,'Jakarta Selatan':3,'Jakarta Barat':3,'Jakarta Pusat':3,'Karawang Utara':3,'Purwakarta':3,'Jakarta Utara':2,'Depok':2,'Bogor':2,'Tangerang':1};
@@ -340,7 +341,7 @@ function getStdDP(delivType, jalur, armada, desc) {
   return null;
 }
 
-function pairData(lcData, otData) {
+function pairData(lcData, otData, klsHoData) {
   const lcIdx = {};
   lcData.forEach(r => { if(r.TRANSNO) lcIdx[r.TRANSNO.trim()] = r; });
   const lcByNik = {};
@@ -348,6 +349,14 @@ function pairData(lcData, otData) {
     const id = String(r.DriverId||'').trim();
     const dt = String(r.PLANDELIVERYDATE||'').slice(0,10);
     if (!lcByNik[id+'|'+dt]) lcByNik[id+'|'+dt] = r;
+  });
+
+  // KLS HO lookup: NIK + Tanggal -> NO LC (fallback khusus BU KLS)
+  const klsHoIdx = {};
+  (klsHoData||[]).forEach(r => {
+    const nik = String(r.NIK||'').replace(/\s/g,'').trim();
+    const dt = String(r.Tanggal||'').slice(0,10);
+    if (nik && dt && !klsHoIdx[nik+'|'+dt]) klsHoIdx[nik+'|'+dt] = r['NO LC'];
   });
 
   return otData.map(ot => {
@@ -369,6 +378,15 @@ function pairData(lcData, otData) {
     let lc = null, matchMethod = 'No Match';
     if (lcNo && lcIdx[lcNo]) { lc = lcIdx[lcNo]; matchMethod = 'LC Number'; }
     else { const fb = lcByNik[empId+'|'+otDate]; if(fb) { lc=fb; matchMethod='NIK + Date'; } }
+    if (!lc) {
+      // Fallback khusus KLS: cari NO LC dari KLS HO by NIK + Tanggal
+      const klsLcNo = klsHoIdx[empId+'|'+otDate];
+      if (klsLcNo && lcIdx[klsLcNo]) {
+        lc = lcIdx[klsLcNo];
+        lcNo = klsLcNo;
+        matchMethod = 'KLS HO';
+      }
+    }
 
     const jalur   = lc ? lc.JALUR : '';
     const armada  = lc ? lc['TIPE ARMADA'] : '';
@@ -762,18 +780,24 @@ function renderAnomali() {
 
 async function loadData() {
   try {
-    const [lcRes, otRes] = await Promise.all([
+    const [lcRes, otRes, klsHoRes] = await Promise.all([
       fetch(LC_CSV+'?t='+Date.now()),
-      fetch(OT_CSV+'?t='+Date.now())
+      fetch(OT_CSV+'?t='+Date.now()),
+      fetch(KLS_HO_CSV+'?t='+Date.now()).catch(()=>null)
     ]);
     if (!lcRes.ok) throw new Error('LC data tidak ditemukan');
     if (!otRes.ok) throw new Error('OT data tidak ditemukan');
     const [lcText, otText] = await Promise.all([lcRes.text(), otRes.text()]);
     const rawLC = Papa.parse(lcText,{header:true,skipEmptyLines:true}).data;
     const rawOT = Papa.parse(otText,{header:true,skipEmptyLines:true}).data;
+    let rawKlsHo = [];
+    if (klsHoRes && klsHoRes.ok) {
+      const klsHoText = await klsHoRes.text();
+      rawKlsHo = Papa.parse(klsHoText,{header:true,skipEmptyLines:true}).data;
+    }
     window._rawLC = rawLC;
     window._rawOT = rawOT;
-    pairedData = pairData(rawLC, rawOT);
+    pairedData = pairData(rawLC, rawOT, rawKlsHo);
     setDateRangeBounds(pairedData);
     populateFilters(pairedData);
     renderAll();

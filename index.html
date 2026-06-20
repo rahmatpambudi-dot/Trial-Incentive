@@ -253,6 +253,11 @@
           <div class="value" id="count-unmatch">—</div>
           <div class="sub">baris OT tidak terpair</div>
         </div>
+        <div class="kpi" style="border-top:3px solid #ec4899">
+          <div class="label">Kategori Mismatch</div>
+          <div class="value" id="count-mismatch">—</div>
+          <div class="sub">deskripsi 2 LC tapi bukan RITASE</div>
+        </div>
       </div>
       <div class="full-card">
         <h2>TAT Corrupt — Nilai 1108xxx (Data Error di Sheets)</h2>
@@ -265,6 +270,15 @@
       <div class="full-card">
         <h2>OT Tidak Terpair ke LC</h2>
         <div class="table-wrap" id="table-unmatch"><div style="text-align:center;padding:2rem;color:#9ca3af">Memuat...</div></div>
+      </div>
+
+      <div class="full-card">
+        <h2>Kategori Overtime Mismatch — Deskripsi 2 LC tapi Bukan RITASE</h2>
+        <p style="font-size:12px;color:#9ca3af;margin-bottom:12px">
+          Deskripsi mengandung pola "RIT 1, RIT 2" (2 LC) namun kolom Kategori Overtime di Sheets bukan RITASE.
+          Kemungkinan salah input kategori oleh tim lapangan.
+        </p>
+        <div class="table-wrap" id="table-mismatch"><div style="text-align:center;padding:2rem;color:#9ca3af">Memuat...</div></div>
       </div>
     </div>
 

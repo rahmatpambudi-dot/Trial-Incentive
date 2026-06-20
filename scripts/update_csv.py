@@ -15,8 +15,9 @@ client = gspread.authorize(creds)
 SPREADSHEET_ID = '1Kilu8Sn6XQrOMxmpna6m7X6hPGCYagl5QxLUFhg8QmE'
 spreadsheet = client.open_by_key(SPREADSHEET_ID)
 
-def excel_serial_to_date(val):
-    """Convert Excel serial number to YYYY-MM-DD string"""
+def excel_serial_to_date(val, dayfirst=True):
+    """Convert Excel serial number to YYYY-MM-DD string.
+    dayfirst controls parsing for string dates (not serial numbers)."""
     try:
         serial = int(float(str(val)))
         if serial > 40000:
@@ -24,7 +25,7 @@ def excel_serial_to_date(val):
     except:
         pass
     try:
-        return pd.to_datetime(str(val), dayfirst=True).strftime('%Y-%m-%d')
+        return pd.to_datetime(str(val), dayfirst=dayfirst).strftime('%Y-%m-%d')
     except:
         return val
 
@@ -99,7 +100,7 @@ if 'Employee ID' in df_ot.columns:
     df_ot = df_ot[df_ot['Employee ID'].notna() & (df_ot['Employee ID'] != '')]
 
 if 'OT Date' in df_ot.columns:
-    df_ot['OT Date'] = df_ot['OT Date'].apply(excel_serial_to_date)
+    df_ot['OT Date'] = df_ot['OT Date'].apply(lambda v: excel_serial_to_date(v, dayfirst=False))
     print(f"Sample OT Date: {df_ot['OT Date'].head(3).tolist()}")
 
 df_ot.to_csv('data/ot_data.csv', index=False)

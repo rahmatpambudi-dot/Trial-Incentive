@@ -627,7 +627,7 @@ function renderTableDetail(data, rate) {
   const rows = data.slice().sort((a,b)=>a.otDate.localeCompare(b.otDate));
   let html = `<table><thead><tr>
     <th>Tanggal</th><th>Driver</th><th>BU</th><th>Site BU</th><th>LC Number</th>
-    <th>Pairing</th><th>Tipe</th><th>Jalur</th>
+    <th>Pairing</th><th>Tipe</th><th>Kategori OT</th><th>Jalur</th>
     <th>Deskripsi OT</th>
     <th>OT Jam</th><th>Biaya OT</th>
     <th>Std DP</th><th>Aktual DP</th><th>Gap DP</th>
@@ -653,6 +653,7 @@ function renderTableDetail(data, rate) {
       <td style="font-family:monospace;font-size:11px">${r.lcNo||'—'}</td>
       <td>${pBadge}</td>
       <td>${r.delivType||'—'}</td>
+      <td><span class="badge gray" style="font-size:10px">${r.kategoriOT||'—'}</span></td>
       <td>${r.jalur||'—'}</td>
       <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.desc}">${r.desc||'—'}</td>
       <td>${r.otJam.toFixed(2)}</td>

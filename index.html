@@ -669,6 +669,7 @@ function renderTableDetail(data, rate) {
       <td style="font-weight:500">${r.isRitase && r.totalTAT!=null ? r.totalTAT.toFixed(2)+' jam' : '—'}</td>
       <td style="font-weight:500;color:${r.isRitase && r.gapTAT!=null ? (r.gapTAT>0?'#065f46':'#991b1b') : '#9ca3af'}">${r.isRitase && r.gapTAT!=null ? r.gapTAT.toFixed(2)+' jam' : '—'}</td>
       <td>${ins>0?fmtS(ins):'—'}</td>
+      <td style="font-weight:500;color:${(r.biayaOT-ins)>0?'#065f46':'#991b1b'}">${fmtS(Math.abs(r.biayaOT-ins))} ${(r.biayaOT-ins)>0?'↓':'↑'}</td>
     </tr>`;
   });
   html += '</tbody></table>';

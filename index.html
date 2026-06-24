@@ -586,16 +586,25 @@ function renderChartSaving(data, rate) {
 function renderTableDriver(data, rate) {
   const byDriver = {};
   data.forEach(r => {
-    if(!byDriver[r.empId]) byDriver[r.empId]={name:r.empName,bu:r.bu,ot:0,ins:0,hari:0,gapPos:0,gapNeg:0};
+    if(!byDriver[r.empId]) byDriver[r.empId]={name:r.empName,bu:r.bu,ot:0,ins:0,hari:0,gapPos:0,gapNeg:0,jamList:[]};
     byDriver[r.empId].ot  += r.biayaOT;
     byDriver[r.empId].ins += computeInsentif(r,rate);
     byDriver[r.empId].hari++;
+    byDriver[r.empId].jamList.push(r.otJam);
     if(r.gapDP>0) byDriver[r.empId].gapPos++;
     else if(r.gapDP!=null&&r.gapDP<0) byDriver[r.empId].gapNeg++;
   });
-  const rows = Object.values(byDriver).map(d=>({...d,selisih:d.ins-d.ot})).sort((a,b)=>b.ot-a.ot);
+  const rows = Object.values(byDriver).map(d => {
+    const jams = d.jamList;
+    const totalJam = jams.reduce((a,b)=>a+b,0);
+    const avgJam = totalJam / jams.length;
+    const minJam = Math.min(...jams);
+    const maxJam = Math.max(...jams);
+    return {...d, selisih:d.ins-d.ot, totalJam, avgJam, minJam, maxJam};
+  }).sort((a,b)=>b.ot-a.ot);
   let html = `<table><thead><tr>
     <th>Driver</th><th>BU</th><th>Hari OT</th>
+    <th>Total Jam OT</th><th>Avg Jam OT</th><th>Min Jam OT</th><th>Max Jam OT</th>
     <th>Biaya OT</th><th>Insentif DP</th>
     <th>Gap OT vs Insentif</th><th>Gap DP+</th><th>Gap DP-</th><th>Status</th>
   </tr></thead><tbody>`;
@@ -609,6 +618,10 @@ function renderTableDriver(data, rate) {
       <td>${r.name}</td>
       <td><span class="badge blue">${r.bu}</span></td>
       <td>${r.hari}</td>
+      <td>${r.totalJam.toFixed(2)} jam</td>
+      <td>${r.avgJam.toFixed(2)} jam</td>
+      <td>${r.minJam.toFixed(2)} jam</td>
+      <td>${r.maxJam.toFixed(2)} jam</td>
       <td>${fmtS(r.ot)}</td>
       <td>${fmtS(r.ins)}</td>
       <td style="color:${r.selisih>=0?'#991b1b':'#065f46'};font-weight:500">

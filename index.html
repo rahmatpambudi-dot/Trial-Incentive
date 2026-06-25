@@ -294,7 +294,7 @@ const RATE_OT_PER_JAM= 51494;
 const JAM_EFEKTIF_RITASE = 8.0;
 
 let pairedData = [];
-let chartDaily, chartGap, chartDpJalur, chartSaving;
+let chartDaily, chartGap, chartDpJalur, chartSaving, chartAvgOtJalur, chartOtKategori;
 let activePage = 'overview';
 
 const fmt  = n => 'Rp ' + Math.round(n).toLocaleString('id-ID');
@@ -697,6 +697,59 @@ function renderTableDetail(data, rate) {
   document.getElementById('table-detail').innerHTML = html;
 }
 
+function renderChartAvgOtJalur(data) {
+  const byJalur = {};
+  data.filter(r => r.jalur).forEach(r => {
+    if (!byJalur[r.jalur]) byJalur[r.jalur] = [];
+    byJalur[r.jalur].push(r.otJam);
+  });
+  const labels = Object.keys(byJalur).sort();
+  const avg = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
+  const avgVals = labels.map(j => +avg(byJalur[j]).toFixed(2));
+  const maxVals = labels.map(j => +Math.max(...byJalur[j]).toFixed(2));
+  if (chartAvgOtJalur) chartAvgOtJalur.destroy();
+  chartAvgOtJalur = new Chart(document.getElementById('chart-avg-ot-jalur'), {
+    type: 'bar',
+    data: { labels, datasets: [
+      { label: 'Avg OT Jam', data: avgVals, backgroundColor: '#3b82f6', borderRadius: 3 },
+      { label: 'Max OT Jam', data: maxVals, backgroundColor: '#f59e0b', borderRadius: 3 },
+    ]},
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw} jam` }}},
+      scales: { x: { ticks: { font: { size: 10 }, maxRotation: 45 }, grid: { display: false }},
+                y: { ticks: { callback: v => v+' jam', font: { size: 10 }}, grid: { color: 'rgba(0,0,0,0.05)' }}}}
+  });
+}
+
+function renderChartOtKategori(data) {
+  const byKat = {};
+  data.filter(r => r.kategoriOT).forEach(r => {
+    const k = r.kategoriOT || 'Lainnya';
+    if (!byKat[k]) byKat[k] = { jam: [], count: 0 };
+    byKat[k].jam.push(r.otJam);
+    byKat[k].count++;
+  });
+  const labels = Object.keys(byKat).sort();
+  const avg = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
+  const avgVals = labels.map(k => +avg(byKat[k].jam).toFixed(2));
+  const colors = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316'];
+  if (chartOtKategori) chartOtKategori.destroy();
+  chartOtKategori = new Chart(document.getElementById('chart-ot-kategori'), {
+    type: 'bar',
+    data: { labels, datasets: [{
+      label: 'Avg OT Jam',
+      data: avgVals,
+      backgroundColor: labels.map((_, i) => colors[i % colors.length]),
+      borderRadius: 3
+    }]},
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `Avg: ${ctx.raw} jam (${byKat[labels[ctx.dataIndex]].count} driver)` }}},
+      scales: { x: { ticks: { font: { size: 11 }, maxRotation: 30 }, grid: { display: false }},
+                y: { ticks: { callback: v => v+' jam', font: { size: 10 }}, grid: { color: 'rgba(0,0,0,0.05)' }}}}
+  });
+}
+
 function renderAll() {
   // Re-pair kalau sumber OT berubah
   const src = document.getElementById('filter-ot-source').value;
@@ -713,6 +766,8 @@ function renderAll() {
     renderChartGap(filtered);
     renderChartDpJalur(filtered);
     renderChartSaving(filtered, rate);
+    renderChartAvgOtJalur(filtered);
+    renderChartOtKategori(filtered);
   } else if (activePage==='driver') {
     renderTableDriver(filtered, rate);
   } else if (activePage==='detail') {

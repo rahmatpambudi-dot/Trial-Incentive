@@ -79,8 +79,11 @@ if 'TRANSNO' in df_lc.columns:
     df_lc = df_lc[df_lc['TRANSNO'].notna() & (df_lc['TRANSNO'].astype(str).str.strip() != '')]
 if 'PLANDELIVERYDATE' in df_lc.columns:
     df_lc['PLANDELIVERYDATE'] = df_lc['PLANDELIVERYDATE'].apply(excel_serial_to_date)
-df_lc.to_csv('data/lc_data.csv', index=False)
-print(f"LC data: {len(df_lc)} rows saved")
+if len(df_lc) > 0:
+    df_lc.to_csv('data/lc_data.csv', index=False)
+    print(f"LC data: {len(df_lc)} rows saved")
+else:
+    print("WARNING: LC data kosong, skip overwrite untuk jaga data lama")
 
 # ── OT DATA ──────────────────────────────────────────────
 OT_COLS = [

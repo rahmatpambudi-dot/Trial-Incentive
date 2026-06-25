@@ -276,6 +276,7 @@
 const LC_CSV = 'data/lc_data.csv';
 const OT_CSV = 'data/ot_data.csv';
 const KLS_HO_CSV = 'data/kls_ho_data.csv';
+const TARIKAN_KLL_CSV = 'data/tarikan_kll_data.csv';
 
 const STD_CUSTOMER   = {'Bekasi':7,'Karawang Selatan':7,'Jakarta Timur':6,'Jakarta Selatan':5,'Jakarta Utara':5,'Jakarta Barat':5,'Jakarta Pusat':5,'Karawang Utara':5,'Purwakarta':5,'Depok':4,'Bogor':4,'Tangerang':2};
 const STD_STORE_KECIL= {'Bekasi':4,'Karawang Selatan':4,'Jakarta Timur':3,'Jakarta Selatan':3,'Jakarta Barat':3,'Jakarta Pusat':3,'Karawang Utara':3,'Purwakarta':3,'Jakarta Utara':2,'Depok':2,'Bogor':2,'Tangerang':1};
@@ -690,6 +691,12 @@ function renderTableDetail(data, rate) {
 }
 
 function renderAll() {
+  // Re-pair kalau sumber OT berubah
+  const src = document.getElementById('filter-ot-source').value;
+  if (window._rawLC && window._rawOT) {
+    const activeOT = src === 'tarikan_kll' ? (window._rawKLL||[]) : window._rawOT;
+    pairedData = pairData(window._rawLC, activeOT, window._rawKlsHo||[]);
+  }
   const filtered = filterData();
   const rate = getRate();
   renderKPI(filtered, rate);
@@ -809,10 +816,11 @@ function renderAnomali() {
 }
 async function loadData() {
   try {
-    const [lcRes, otRes, klsHoRes] = await Promise.all([
+    const [lcRes, otRes, klsHoRes, kllRes] = await Promise.all([
       fetch(LC_CSV+'?t='+Date.now()),
       fetch(OT_CSV+'?t='+Date.now()),
-      fetch(KLS_HO_CSV+'?t='+Date.now()).catch(()=>null)
+      fetch(KLS_HO_CSV+'?t='+Date.now()).catch(()=>null),
+      fetch(TARIKAN_KLL_CSV+'?t='+Date.now()).catch(()=>null)
     ]);
     if (!lcRes.ok) throw new Error('LC data tidak ditemukan');
     if (!otRes.ok) throw new Error('OT data tidak ditemukan');
@@ -824,13 +832,23 @@ async function loadData() {
       const klsHoText = await klsHoRes.text();
       rawKlsHo = Papa.parse(klsHoText,{header:true,skipEmptyLines:true}).data;
     }
+    let rawKLL = [];
+    if (kllRes && kllRes.ok) {
+      const kllText = await kllRes.text();
+      rawKLL = Papa.parse(kllText,{header:true,skipEmptyLines:true}).data;
+    }
     window._rawLC = rawLC;
     window._rawOT = rawOT;
-    pairedData = pairData(rawLC, rawOT, rawKlsHo);
+    window._rawKlsHo = rawKlsHo;
+    window._rawKLL = rawKLL;
+
+    const src = document.getElementById('filter-ot-source').value;
+    const activeOT = src === 'tarikan_kll' ? rawKLL : rawOT;
+    pairedData = pairData(rawLC, activeOT, rawKlsHo);
     setDateRangeBounds(pairedData);
     populateFilters(pairedData);
     renderAll();
-    ['filter-date-from','filter-date-to','filter-bu','filter-jalur','filter-delivery','filter-scenario'].forEach(id => {
+    ['filter-date-from','filter-date-to','filter-bu','filter-jalur','filter-delivery','filter-scenario','filter-ot-source'].forEach(id => {
       document.getElementById(id).addEventListener('change', renderAll);
     });
   } catch(e) {

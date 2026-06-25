@@ -66,35 +66,21 @@ LC_COLS = [
     'DP (STOP)', 'Check Out', 'DP1', 'LastDP', 'Tiba di DC',
     'Travel Time ', '1st - Last DP', 'TAT', 'Owner'
 ]
-print("Pulling LC data via published CSV URL...")
-import urllib.request
-LC_CSV_URL = f"https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/export?format=csv&gid=59477632"
-try:
-    import io
-    req = urllib.request.Request(LC_CSV_URL, headers={'User-Agent': 'Mozilla/5.0'})
-    with urllib.request.urlopen(req, timeout=60) as response:
-        df_lc_raw = pd.read_csv(io.BytesIO(response.read()))
-    print(f"LC raw rows: {len(df_lc_raw)}, cols: {list(df_lc_raw.columns[:5])}")
-    lc_cols_exist = [c for c in LC_COLS if c in df_lc_raw.columns]
-    df_lc = df_lc_raw[lc_cols_exist].copy()
-    if 'TRANSNO' in df_lc.columns:
-        df_lc = df_lc[df_lc['TRANSNO'].notna() & (df_lc['TRANSNO'].astype(str).str.strip() != '')]
-    if 'PLANDELIVERYDATE' in df_lc.columns:
-        df_lc['PLANDELIVERYDATE'] = df_lc['PLANDELIVERYDATE'].apply(excel_serial_to_date)
-    df_lc.to_csv('data/lc_data.csv', index=False)
-    print(f"LC data: {len(df_lc)} rows saved")
-except Exception as e:
-    print(f"CSV URL failed: {e}, falling back to gspread...")
-    ws_lc = spreadsheet.worksheet('DATA')
-    df_lc_raw = read_sheet_robust(ws_lc)
-    lc_cols_exist = [c for c in LC_COLS if c in df_lc_raw.columns]
-    df_lc = df_lc_raw[lc_cols_exist].copy()
-    if 'TRANSNO' in df_lc.columns:
-        df_lc = df_lc[df_lc['TRANSNO'].notna() & (df_lc['TRANSNO'] != '')]
-    if 'PLANDELIVERYDATE' in df_lc.columns:
-        df_lc['PLANDELIVERYDATE'] = df_lc['PLANDELIVERYDATE'].apply(excel_serial_to_date)
-    df_lc.to_csv('data/lc_data.csv', index=False)
-    print(f"LC data fallback: {len(df_lc)} rows saved")
+print("Pulling LC data (tab: DATA)...")
+import time
+# Tunggu 10 detik untuk IMPORTRANGE warm up
+time.sleep(10)
+ws_lc = spreadsheet.worksheet('DATA')
+df_lc_raw = read_sheet_robust(ws_lc)
+print(f"LC raw: {len(df_lc_raw)} rows, cols: {list(df_lc_raw.columns[:5])}")
+lc_cols_exist = [c for c in LC_COLS if c in df_lc_raw.columns]
+df_lc = df_lc_raw[lc_cols_exist].copy()
+if 'TRANSNO' in df_lc.columns:
+    df_lc = df_lc[df_lc['TRANSNO'].notna() & (df_lc['TRANSNO'].astype(str).str.strip() != '')]
+if 'PLANDELIVERYDATE' in df_lc.columns:
+    df_lc['PLANDELIVERYDATE'] = df_lc['PLANDELIVERYDATE'].apply(excel_serial_to_date)
+df_lc.to_csv('data/lc_data.csv', index=False)
+print(f"LC data: {len(df_lc)} rows saved")
 
 # ── OT DATA ──────────────────────────────────────────────
 OT_COLS = [

@@ -106,6 +106,51 @@ if 'OT Date' in df_ot.columns:
 df_ot.to_csv('data/ot_data.csv', index=False)
 print(f"OT data: {len(df_ot)} rows, kolom: {list(df_ot.columns)}")
 
+# ── TARIKAN KLL (sumber OT alternatif kalau tab Overtime belum update) ──
+print("Pulling Tarikan KLL data (tab: Tarikan KLL)...")
+try:
+    ws_kll = spreadsheet.worksheet('Tarikan KLL')
+    df_kll_raw = read_sheet_robust(ws_kll)
+
+    def parse_lama_lembur(val):
+        """Convert H:MM ke jam desimal"""
+        try:
+            parts = str(val).strip().split(':')
+            return int(parts[0]) + int(parts[1])/60
+        except:
+            return None
+
+    # Mapping kolom Tarikan KLL → format OT dashboard
+    df_kll = pd.DataFrame()
+    df_kll['Employee ID'] = df_kll_raw['NIK'].astype(str).str.strip()
+    df_kll['Employee Name'] = df_kll_raw['nama_karyawan'].astype(str).str.strip()
+    df_kll['OT Date'] = df_kll_raw['Tanggal_Lembur'].apply(lambda v: excel_serial_to_date(v, dayfirst=False))
+    
+    # Parse LamaLemburKLL ke jam dan menit
+    lama_jam = df_kll_raw['LamaLemburKLL'].apply(parse_lama_lembur)
+    df_kll['Total OT Hour'] = lama_jam.apply(lambda x: int(x) if pd.notna(x) else 0)
+    df_kll['minute(s)'] = lama_jam.apply(lambda x: round((x - int(x)) * 60) if pd.notna(x) else 0)
+    
+    df_kll['Status'] = 'Approved'
+    df_kll['Description'] = df_kll_raw['Description'].fillna('')
+    df_kll['Location Name'] = df_kll_raw['Facility'].apply(
+        lambda x: 'DC CIKARANG JABABEKA (KLS)' if 'KLS' in str(x).upper() else 'DC CIKARANG JABABEKA (AHI)'
+    )
+    df_kll['Organization Name'] = df_kll_raw['Facility'].apply(
+        lambda x: f"SLT-OPERATION-PROJECT (DC - {'KLS' if 'KLS' in str(x).upper() else 'AHI'})-DC JABABEKA"
+    )
+    df_kll['Site BU'] = df_kll_raw['Facility'].astype(str).str.strip()
+    df_kll['Kategori Overtime'] = df_kll_raw['kategori_overtime'].astype(str).str.strip()
+
+    # Drop baris tanpa Employee ID
+    df_kll = df_kll[df_kll['Employee ID'].notna() & (df_kll['Employee ID'] != '') & (df_kll['Employee ID'] != 'nan')]
+
+    df_kll.to_csv('data/tarikan_kll_data.csv', index=False)
+    print(f"Tarikan KLL: {len(df_kll)} rows saved")
+except Exception as e:
+    print(f"Tarikan KLL error: {e}")
+    pd.DataFrame(columns=['Employee ID','Employee Name','OT Date','Day Name','Total OT Hour','minute(s)','Status','Description','Location Name','Organization Name','Site BU','Kategori Overtime']).to_csv('data/tarikan_kll_data.csv', index=False)
+
 # ── KLS HO DATA (untuk fallback pairing LC khusus BU KLS) ──
 KLS_HO_COLS = ['Tanggal', 'NIK', 'Nama', 'NO LC']
 print("Pulling KLS HO data (tab: KLS HO)...")

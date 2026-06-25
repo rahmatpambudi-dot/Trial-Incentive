@@ -127,7 +127,7 @@ try:
     df_kll['OT Date'] = df_kll_raw['Tanggal_Lembur'].apply(lambda v: excel_serial_to_date(v, dayfirst=False))
     
     # Parse LamaLemburKLL ke jam dan menit
-    lama_jam = df_kll_raw['LamaLemburKLL'].apply(parse_lama_lembur)
+    lama_jam = df_kll_raw['Lama_Lembur_SPL'].apply(parse_lama_lembur)
     df_kll['Total OT Hour'] = lama_jam.apply(lambda x: int(x) if pd.notna(x) else 0)
     df_kll['minute(s)'] = lama_jam.apply(lambda x: round((x - int(x)) * 60) if pd.notna(x) else 0)
     

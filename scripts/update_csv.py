@@ -29,11 +29,18 @@ def excel_serial_to_date(val, dayfirst=True):
     except:
         return val
 
-def read_sheet_robust(worksheet):
+def read_sheet_robust(worksheet, max_retry=3):
     """Baca sheet pakai get_all_values - robust terhadap row/header kosong dan duplikat."""
-    all_values = worksheet.get_all_values()
-    if not all_values:
-        raise Exception(f"Sheet {worksheet.title} kosong")
+    import time
+    all_values = []
+    for attempt in range(max_retry):
+        all_values = worksheet.get_all_values()
+        if all_values and len(all_values) > 1:
+            break
+        print(f"Sheet {worksheet.title} kosong/belum ready, retry {attempt+1}/{max_retry}...")
+        time.sleep(5)
+    if not all_values or len(all_values) <= 1:
+        raise Exception(f"Sheet {worksheet.title} kosong setelah {max_retry} retry")
 
     raw_headers = all_values[0]
     seen = {}

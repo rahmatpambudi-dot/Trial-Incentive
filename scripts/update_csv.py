@@ -68,29 +68,68 @@ OT_COLS = [
 ]
 print("Pulling OT data (tab: Overtime)...")
 ws_ot = spreadsheet.worksheet('Overtime')
-df_ot_raw = read_sheet_robust(ws_ot)
 
-minute_col = None
-for c in df_ot_raw.columns:
-    cl = c.lower()
-    if 'menit' in cl or 'minute' in cl or 'unnamed: 29' in cl:
-        minute_col = c
-        break
-if minute_col and minute_col != 'minute(s)':
-    df_ot_raw = df_ot_raw.rename(columns={minute_col: 'minute(s)'})
-
-ot_cols_exist = [c for c in OT_COLS if c in df_ot_raw.columns]
-df_ot = df_ot_raw[ot_cols_exist].copy()
-if 'Employee ID' in df_ot.columns:
-    df_ot = df_ot[df_ot['Employee ID'].notna() & (df_ot['Employee ID'] != '')]
-if 'OT Date' in df_ot.columns:
-    df_ot['OT Date'] = df_ot['OT Date'].apply(lambda v: excel_serial_to_date(v, dayfirst=False))
-
-if len(df_ot) > 0:
-    df_ot.to_csv('data/ot_data.csv', index=False)
-    print(f"OT data: {len(df_ot)} rows saved")
+# Tab Overtime punya 2 header rows - combine untuk dapat nama kolom yang benar
+all_vals = ws_ot.get_all_values()
+if not all_vals or len(all_vals) < 3:
+    print("WARNING: OT tab terlalu sedikit data")
 else:
-    print("WARNING: OT data kosong, skip overwrite")
+    row1 = all_vals[0]  # header utama
+    row2 = all_vals[1]  # sub-header
+
+    # Combine row1 + row2 jadi nama kolom
+    combined_headers = []
+    seen = {}
+    last_r1 = ''
+    for i, (h1, h2) in enumerate(zip(row1, row2)):
+        h1 = h1.strip()
+        h2 = h2.strip()
+        if h1:
+            last_r1 = h1
+        # Kalau ada sub-header, combine
+        if h2 and h2 not in ['hour(s)', 'minute(s)', 'In', 'Out']:
+            col_name = h2
+        elif h2 in ['hour(s)', 'minute(s)']:
+            col_name = f"{last_r1} {h2}"
+        elif h1:
+            col_name = h1
+        else:
+            col_name = f"_col_{i}"
+
+        # Deduplicate
+        if col_name in seen:
+            seen[col_name] += 1
+            col_name = f"{col_name}_{seen[col_name]}"
+        else:
+            seen[col_name] = 0
+        combined_headers.append(col_name)
+
+    df_ot_raw = pd.DataFrame(all_vals[2:], columns=combined_headers)
+    df_ot_raw = df_ot_raw.replace('', None).dropna(how='all')
+
+    print(f"OT columns sample: {combined_headers[:10]}")
+
+    # Map ke nama standar dashboard
+    # Cari kolom Total OT Hour hour(s) dan minute(s)
+    hour_col = next((c for c in df_ot_raw.columns if 'Total OT Hour' in c and 'hour' in c.lower()), None)
+    min_col  = next((c for c in df_ot_raw.columns if 'Total OT Hour' in c and 'minute' in c.lower()), None)
+
+    if hour_col: df_ot_raw = df_ot_raw.rename(columns={hour_col: 'Total OT Hour'})
+    if min_col:  df_ot_raw = df_ot_raw.rename(columns={min_col:  'minute(s)'})
+
+    ot_cols_exist = [c for c in OT_COLS if c in df_ot_raw.columns]
+    df_ot = df_ot_raw[ot_cols_exist].copy()
+    if 'Employee ID' in df_ot.columns:
+        df_ot = df_ot[df_ot['Employee ID'].notna() & (df_ot['Employee ID'].astype(str).str.strip() != '')]
+    if 'OT Date' in df_ot.columns:
+        df_ot['OT Date'] = df_ot['OT Date'].apply(lambda v: excel_serial_to_date(v, dayfirst=False))
+    print(f"Sample minute(s): {df_ot['minute(s)'].head(5).tolist() if 'minute(s)' in df_ot.columns else 'NOT FOUND'}")
+
+    if len(df_ot) > 0:
+        df_ot.to_csv('data/ot_data.csv', index=False)
+        print(f"OT data: {len(df_ot)} rows saved")
+    else:
+        print("WARNING: OT data kosong, skip overwrite")
 
 # ── TARIKAN KLL ──────────────────────────────────────────
 print("Pulling Tarikan KLL data (tab: Tarikan KLL)...")

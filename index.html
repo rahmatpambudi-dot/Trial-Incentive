@@ -781,7 +781,7 @@ function renderChartAvgOtJalur(data) {
 
 function renderChartOtKategori(data) {
   const byKat = {};
-  data.filter(r => r.kategoriOT).forEach(r => {
+  data.filter(r => r.kategoriOT && r.kategoriOT !== 'nan' && r.kategoriOT !== '#N/A' && r.kategoriOT !== '').forEach(r => {
     const k = r.kategoriOT || 'Lainnya';
     if (!byKat[k]) byKat[k] = 0;
     byKat[k]++;
@@ -932,11 +932,13 @@ function renderAll() {
     renderChartGap(filtered);
     renderChartDpJalur(filtered);
     renderChartSaving(filtered, rate);
-    renderChartAvgOtJalur(filtered);
-    renderChartOtKategori(filtered);
-    renderChartTrendJalur(filtered);
-    renderChartCostJalur(filtered, rate);
-    renderChartCountJalur(filtered);
+    if (activePage === 'overview') {
+      renderChartAvgOtJalur(filtered);
+      renderChartOtKategori(filtered);
+      renderChartTrendJalur(filtered);
+      renderChartCostJalur(filtered, rate);
+      renderChartCountJalur(filtered);
+    }
   } else if (activePage==='driver') {
     renderTableDriver(filtered, rate);
   } else if (activePage==='detail') {

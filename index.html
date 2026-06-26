@@ -348,6 +348,24 @@ const ARMADA_BESAR   = ['FUSO','WINGBOX','CONT-40'];
 const RATE_OT_PER_JAM= 51494;
 const JAM_EFEKTIF_RITASE = 8.0;
 
+// Standar Ritase Langsiran per DC tujuan (jumlah trip minimum)
+const STD_LANGSIRAN_TRIP = {
+  'DC 10': 4, 'DC10': 4,
+  'DC 5': 4,  'DC5': 4,
+  'JURONG': 3,
+  'KITTIC': 2, 'KITIC': 2,
+  'DELTA 8': 2, 'DELTA8': 2,
+};
+
+function getLangsirStdTrip(desc) {
+  if (!desc) return null;
+  const d = desc.toUpperCase();
+  for (const [key, val] of Object.entries(STD_LANGSIRAN_TRIP)) {
+    if (d.includes(key)) return val;
+  }
+  return null;
+}
+
 let pairedData = [];
 let chartDaily, chartGap, chartDpJalur, chartSaving, chartAvgOtJalur, chartOtKategori, chartTrendJalur, chartCostJalur, chartCountJalur;
 let activePage = 'overview';
@@ -456,6 +474,7 @@ function pairData(lcData, otData, klsHoData) {
     const aktualDP= lc ? Number(lc['DP (STOP)']) : null;
     const kategoriOT = (ot['Kategori Overtime']||'').trim();
     const isRitase = kategoriOT.toUpperCase() === 'RITASE';
+    const isLangsir = kategoriOT.toUpperCase() === 'LANGSIR';
 
     let delivType, stdDP, gapDP, tat, ritLCs = [], ritTATs = [], totalTAT = null, gapTAT = null;
 
@@ -465,7 +484,6 @@ function pairData(lcData, otData, klsHoData) {
       ritTATs = ritLCs.map(lcCode => {
         const lcRow = lcIdx[lcCode];
         const h = lcRow ? tatToHours(lcRow.TAT) : null;
-        // Sanity check: TAT wajar maksimal 24 jam, di atas itu data corrupt
         return (h !== null && h <= 24) ? h : null;
       });
       const validTATs = ritTATs.filter(t => t !== null && t !== undefined);
@@ -473,6 +491,19 @@ function pairData(lcData, otData, klsHoData) {
       gapTAT = totalTAT !== null ? totalTAT - JAM_EFEKTIF_RITASE : null;
       stdDP = null; gapDP = null;
       tat = totalTAT !== null ? totalTAT.toFixed(2)+' jam' : '';
+    } else if (isLangsir) {
+      delivType = 'Langsiran';
+      ritLCs = extractRitLCs(desc);
+      const aktualTrip = ritLCs.length;
+      const stdTrip = getLangsirStdTrip(desc);
+      // Gap = aktual trip - standar trip (bukan TAT)
+      gapTAT = (stdTrip !== null) ? aktualTrip - stdTrip : null;
+      totalTAT = aktualTrip;  // simpan aktual trip di totalTAT field
+      stdDP = stdTrip;        // simpan standar trip di stdDP field untuk display
+      aktualDP = aktualTrip;  // simpan aktual trip di aktualDP field
+      gapDP = null;
+      tat = '';
+      ritTATs = [];
     } else {
       delivType = getDeliveryType(lcNo, desc);
       stdDP   = getStdDP(delivType, jalur, armada, desc);
@@ -488,12 +519,15 @@ function pairData(lcData, otData, klsHoData) {
     return { empId, empName:ot['Employee Name']||'', otDate, otJam, biayaOT,
              bu, siteBu, desc, lcNo, matchMethod, jalur, armada, delivType,
              stdDP, aktualDP, gapDP, tat,
-             kategoriOT, isRitase, ritLCs, ritTATs, totalTAT, gapTAT };
+             kategoriOT, isRitase, isLangsir, ritLCs, ritTATs, totalTAT, gapTAT };
   });
 }
 
 function computeInsentif(row, rate) {
   if (row.isRitase) {
+    return (row.gapTAT!=null && row.gapTAT>0) ? row.gapTAT*rate : 0;
+  }
+  if (row.isLangsir) {
     return (row.gapTAT!=null && row.gapTAT>0) ? row.gapTAT*rate : 0;
   }
   return (row.gapDP!=null && row.gapDP>0) ? row.gapDP*rate : 0;

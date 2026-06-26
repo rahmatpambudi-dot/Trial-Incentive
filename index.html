@@ -6,6 +6,8 @@
   <title>Trial Insentif vs OT | ConnectOne</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <script>Chart.register(ChartDataLabels);</script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -751,7 +753,10 @@ function renderChartAvgOtJalur(data) {
       { label: 'Max OT Jam', data: maxVals, backgroundColor: '#f59e0b', borderRadius: 3 },
     ]},
     options: { responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw} jam` }}},
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw} jam` }},
+        datalabels: { anchor: 'end', align: 'end', formatter: v => v+' jam', font: { size: 9 }, color: '#555' }
+      },
       scales: { x: { ticks: { font: { size: 10 }, maxRotation: 45 }, grid: { display: false }},
                 y: { ticks: { callback: v => v+' jam', font: { size: 10 }}, grid: { color: 'rgba(0,0,0,0.05)' }}}}
   });
@@ -783,7 +788,15 @@ function renderChartOtKategori(data) {
           const total = vals.reduce((a,b)=>a+b,0);
           const pct = ((ctx.raw/total)*100).toFixed(1);
           return `${ctx.label}: ${ctx.raw} driver (${pct}%)`;
-        }}}
+        }}},
+        datalabels: {
+          display: ctx => (ctx.raw / vals.reduce((a,b)=>a+b,0)) > 0.04,
+          formatter: (v, ctx) => {
+            const total = vals.reduce((a,b)=>a+b,0);
+            return ((v/total)*100).toFixed(0)+'%';
+          },
+          color: '#fff', font: { size: 11, weight: 'bold' }
+        }
       }
     }
   });
@@ -850,7 +863,11 @@ function renderChartCostJalur(data, rate) {
       { label: 'Insentif', data: labels.map(j=>Math.round(byJalur[j].ins)), backgroundColor: '#10b981', borderRadius: 3 },
     ]},
     options: { responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${fmt(ctx.raw)}` }}},
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${fmt(ctx.raw)}` }},
+        datalabels: { display: ctx => ctx.raw > 0, anchor: 'end', align: 'end',
+          formatter: v => 'Rp '+(v/1e6).toFixed(1)+'jt', font: { size: 9 }, color: '#555' }
+      },
       scales: {
         x: { ticks: { font: { size: 10 }, maxRotation: 45 }, grid: { display: false }},
         y: { ticks: { callback: v => 'Rp '+(v/1e6).toFixed(1)+'jt', font: { size: 10 }}, grid: { color: 'rgba(0,0,0,0.05)' }}

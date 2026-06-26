@@ -226,6 +226,42 @@
       </div>
     </div>
 
+    <!-- ADDITIONAL CHARTS -->
+    <div class="charts-grid" id="page-overview-extra">
+      <div class="card" style="grid-column:span 2">
+        <h2>Trend Avg OT Jam Harian — per Jalur (Top 6)</h2>
+        <div style="position:relative;width:100%;height:280px"><canvas id="chart-trend-jalur"></canvas></div>
+      </div>
+    </div>
+    <div class="charts-grid">
+      <div class="card">
+        <h2>Total Biaya OT per Jalur</h2>
+        <div class="legend">
+          <span><span class="dot" style="background:#3b82f6"></span>Biaya OT</span>
+          <span><span class="dot" style="background:#10b981"></span>Insentif</span>
+        </div>
+        <div class="chart-wrap-tall"><canvas id="chart-cost-jalur"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Jumlah Hari OT per Jalur</h2>
+        <div class="chart-wrap-tall"><canvas id="chart-count-jalur"></canvas></div>
+      </div>
+    </div>
+    <div class="charts-grid">
+      <div class="card">
+        <h2>Avg OT Jam per Jalur</h2>
+        <div class="legend">
+          <span><span class="dot" style="background:#3b82f6"></span>Avg</span>
+          <span><span class="dot" style="background:#f59e0b"></span>Max</span>
+        </div>
+        <div class="chart-wrap-tall"><canvas id="chart-avg-ot-jalur"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Distribusi OT Jam per Kategori</h2>
+        <div class="chart-wrap-tall"><canvas id="chart-ot-kategori"></canvas></div>
+      </div>
+    </div>
+
     <!-- PAGE 2: REKAP DRIVER -->
     <div class="page" id="page-driver">
       <div class="full-card">

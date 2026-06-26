@@ -883,6 +883,8 @@ function renderAll() {
   if (window._rawLC && window._rawOT) {
     const activeOT = src === 'tarikan_kll' ? (window._rawKLL||[]) : window._rawOT;
     pairedData = pairData(window._rawLC, activeOT, window._rawKlsHo||[]);
+    // Update date bounds sesuai data aktif
+    setDateRangeBounds(pairedData);
   }
   const filtered = filterData();
   const rate = getRate();

@@ -282,6 +282,23 @@
 
     <!-- PAGE 4: DATA ANOMALI -->
     <div class="page" id="page-anomali">
+      <!-- DATA QUALITY SCORE -->
+      <div class="full-card" style="margin-bottom:16px">
+        <h2>Data Readiness Score</h2>
+        <div id="dq-score-section">
+          <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-bottom:16px">
+            <div style="text-align:center">
+              <div id="dq-score-circle" style="width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#fff;background:#e5e7eb;margin:0 auto 8px">—</div>
+              <div style="font-size:12px;color:#9ca3af">Overall Score</div>
+            </div>
+            <div style="flex:1;min-width:200px">
+              <div id="dq-metrics" style="display:grid;gap:10px"></div>
+            </div>
+          </div>
+          <div id="dq-verdict" style="padding:10px 14px;border-radius:8px;font-size:13px;font-weight:500"></div>
+        </div>
+      </div>
+
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
         <div class="kpi" style="border-top:3px solid #ef4444">
           <div class="label">TAT Corrupt (1108xxx)</div>
@@ -934,6 +951,75 @@ function tatToHours(tat) {
   return parseInt(parts[0]) + parseInt(parts[1])/60 + (parseInt(parts[2]||0)/3600);
 }
 
+function renderDataQuality() {
+  if (!window._rawLC || !pairedData.length) return;
+  const lc = window._rawLC;
+  const total = pairedData.length;
+
+  // 1. Match rate
+  const matched = pairedData.filter(r => r.matchMethod !== 'No Match').length;
+  const matchRate = total > 0 ? (matched/total*100) : 0;
+
+  // 2. TAT valid rate (dari LC)
+  const lcWithTAT = lc.filter(r => r.TAT && r.TAT !== '').length;
+  const tatCorrupt = lc.filter(r => { const h = tatToHours(r.TAT); return h !== null && h > 100000; }).length;
+  const tatHigh = lc.filter(r => { const h = tatToHours(r.TAT); return h !== null && h > 24 && h <= 100000; }).length;
+  const tatValid = lc.length > 0 ? ((lc.length - tatCorrupt) / lc.length * 100) : 0;
+
+  // 3. Kategori terisi
+  const hasKategori = pairedData.filter(r => r.kategoriOT && r.kategoriOT !== '' && r.kategoriOT !== 'nan').length;
+  const kategoriRate = total > 0 ? (hasKategori/total*100) : 0;
+
+  // 4. Gap bisa dihitung
+  const hasGap = pairedData.filter(r => r.gapDP !== null || r.gapTAT !== null).length;
+  const gapRate = total > 0 ? (hasGap/total*100) : 0;
+
+  // Overall score (weighted)
+  const score = Math.round(matchRate*0.4 + tatValid*0.2 + kategoriRate*0.2 + gapRate*0.2);
+
+  // Color & verdict
+  let color, verdict, verdictBg;
+  if (score >= 80) {
+    color = '#10b981'; verdict = '✅ Data siap dijadikan basis skema insentif'; verdictBg = '#d1fae5';
+  } else if (score >= 60) {
+    color = '#f59e0b'; verdict = '⚠️ Data cukup namun perlu review — beberapa area perlu diperbaiki sebelum finalisasi'; verdictBg = '#fef3c7';
+  } else {
+    color = '#ef4444'; verdict = '❌ Data belum siap — terlalu banyak missing/corrupt, perlu perbaikan signifikan'; verdictBg = '#fee2e2';
+  }
+
+  // Render score circle
+  document.getElementById('dq-score-circle').textContent = score+'%';
+  document.getElementById('dq-score-circle').style.background = color;
+
+  // Render metrics
+  const metrics = [
+    { label: 'Match Rate OT → LC', val: matchRate, desc: `${matched} dari ${total} baris terpair`, weight: '40%' },
+    { label: 'TAT Valid (tidak corrupt)', val: tatValid, desc: `${lc.length - tatCorrupt} dari ${lc.length} LC`, weight: '20%' },
+    { label: 'Kategori OT Terisi', val: kategoriRate, desc: `${hasKategori} dari ${total} baris`, weight: '20%' },
+    { label: 'Gap Bisa Dihitung', val: gapRate, desc: `${hasGap} dari ${total} baris`, weight: '20%' },
+  ];
+
+  document.getElementById('dq-metrics').innerHTML = metrics.map(m => {
+    const pct = m.val.toFixed(1);
+    const mc = m.val >= 80 ? '#10b981' : m.val >= 60 ? '#f59e0b' : '#ef4444';
+    return `<div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:12px;color:#374151">${m.label} <span style="color:#9ca3af;font-size:11px">(bobot ${m.weight})</span></span>
+        <span style="font-size:12px;font-weight:600;color:${mc}">${pct}%</span>
+      </div>
+      <div style="background:#f3f4f6;border-radius:4px;height:6px;margin-bottom:2px">
+        <div style="background:${mc};height:6px;border-radius:4px;width:${Math.min(m.val,100)}%"></div>
+      </div>
+      <div style="font-size:11px;color:#9ca3af">${m.desc}</div>
+    </div>`;
+  }).join('');
+
+  // Verdict
+  document.getElementById('dq-verdict').textContent = verdict;
+  document.getElementById('dq-verdict').style.background = verdictBg;
+  document.getElementById('dq-verdict').style.color = color;
+}
+
 // Sort state untuk tabel anomali
 let anomaliSort = { corrupt: {col:null,asc:true}, tatHigh: {col:null,asc:true}, unmatch: {col:null,asc:true} };
 
@@ -962,6 +1048,7 @@ function thSort(tblKey, col, label) {
 }
 
 function renderAnomali() {
+  renderDataQuality();
   if (!window._rawLC || !window._rawOT || !pairedData.length) {
     ['table-corrupt','table-tat-high','table-unmatch'].forEach(id => {
       document.getElementById(id).innerHTML = '<div style="text-align:center;padding:1.5rem;color:#9ca3af;font-size:13px">Data belum dimuat...</div>';

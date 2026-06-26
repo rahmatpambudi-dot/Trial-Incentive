@@ -294,7 +294,7 @@ const RATE_OT_PER_JAM= 51494;
 const JAM_EFEKTIF_RITASE = 8.0;
 
 let pairedData = [];
-let chartDaily, chartGap, chartDpJalur, chartSaving, chartAvgOtJalur, chartOtKategori;
+let chartDaily, chartGap, chartDpJalur, chartSaving, chartAvgOtJalur, chartOtKategori, chartTrendJalur, chartCostJalur, chartCountJalur;
 let activePage = 'overview';
 
 const fmt  = n => 'Rp ' + Math.round(n).toLocaleString('id-ID');
@@ -750,6 +750,97 @@ function renderChartOtKategori(data) {
   });
 }
 
+function renderChartTrendJalur(data) {
+  const dates = [...new Set(data.map(r=>r.otDate).filter(Boolean))].sort();
+  const jalurGroups = {};
+  data.filter(r=>r.jalur&&r.otDate).forEach(r=>{
+    if(!jalurGroups[r.jalur]) jalurGroups[r.jalur]=[];
+    jalurGroups[r.jalur].push(r);
+  });
+  // Top 6 jalur by total rows
+  const top6 = Object.entries(jalurGroups)
+    .sort((a,b)=>b[1].length-a[1].length)
+    .slice(0,6).map(([k])=>k);
+
+  const colors = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
+  const datasets = top6.map((jalur,i) => {
+    const rows = jalurGroups[jalur];
+    const byDate = {};
+    rows.forEach(r=>{ if(!byDate[r.otDate]) byDate[r.otDate]=[]; byDate[r.otDate].push(r.otJam); });
+    const avg = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
+    return {
+      label: jalur,
+      data: dates.map(d => byDate[d] ? +avg(byDate[d]).toFixed(2) : null),
+      borderColor: colors[i], backgroundColor: colors[i]+'22',
+      tension: 0.3, pointRadius: 3, fill: false,
+      spanGaps: true
+    };
+  });
+
+  if (chartTrendJalur) chartTrendJalur.destroy();
+  chartTrendJalur = new Chart(document.getElementById('chart-trend-jalur'), {
+    type: 'line',
+    data: { labels: dates.map(fmtL), datasets },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }},
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw} jam` }}
+      },
+      scales: {
+        x: { ticks: { font: { size: 10 }, maxRotation: 45 }, grid: { display: false }},
+        y: { ticks: { callback: v => v+' jam', font: { size: 10 }}, grid: { color: 'rgba(0,0,0,0.05)' }}
+      }
+    }
+  });
+}
+
+function renderChartCostJalur(data, rate) {
+  const byJalur = {};
+  data.filter(r=>r.jalur).forEach(r=>{
+    if(!byJalur[r.jalur]) byJalur[r.jalur]={cost:0,ins:0,count:0};
+    byJalur[r.jalur].cost += r.biayaOT;
+    byJalur[r.jalur].ins += computeInsentif(r,rate);
+    byJalur[r.jalur].count++;
+  });
+  const labels = Object.keys(byJalur).sort((a,b)=>byJalur[b].cost-byJalur[a].cost);
+  if (chartCostJalur) chartCostJalur.destroy();
+  chartCostJalur = new Chart(document.getElementById('chart-cost-jalur'), {
+    type: 'bar',
+    data: { labels, datasets: [
+      { label: 'Biaya OT', data: labels.map(j=>Math.round(byJalur[j].cost)), backgroundColor: '#3b82f6', borderRadius: 3 },
+      { label: 'Insentif', data: labels.map(j=>Math.round(byJalur[j].ins)), backgroundColor: '#10b981', borderRadius: 3 },
+    ]},
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${fmt(ctx.raw)}` }}},
+      scales: {
+        x: { ticks: { font: { size: 10 }, maxRotation: 45 }, grid: { display: false }},
+        y: { ticks: { callback: v => 'Rp '+(v/1e6).toFixed(1)+'jt', font: { size: 10 }}, grid: { color: 'rgba(0,0,0,0.05)' }}
+      }
+    }
+  });
+}
+
+function renderChartCountJalur(data) {
+  const byJalur = {};
+  data.filter(r=>r.jalur).forEach(r=>{
+    if(!byJalur[r.jalur]) byJalur[r.jalur]=0;
+    byJalur[r.jalur]++;
+  });
+  const labels = Object.keys(byJalur).sort((a,b)=>byJalur[b]-byJalur[a]);
+  if (chartCountJalur) chartCountJalur.destroy();
+  chartCountJalur = new Chart(document.getElementById('chart-count-jalur'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Hari OT', data: labels.map(j=>byJalur[j]), backgroundColor: '#8b5cf6', borderRadius: 3 }]},
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }},
+      scales: {
+        x: { ticks: { font: { size: 10 }, maxRotation: 45 }, grid: { display: false }},
+        y: { ticks: { font: { size: 10 }}, grid: { color: 'rgba(0,0,0,0.05)' }}
+      }
+    }
+  });
+}
+
 function renderAll() {
   // Re-pair kalau sumber OT berubah
   const src = document.getElementById('filter-ot-source').value;
@@ -768,6 +859,9 @@ function renderAll() {
     renderChartSaving(filtered, rate);
     renderChartAvgOtJalur(filtered);
     renderChartOtKategori(filtered);
+    renderChartTrendJalur(filtered);
+    renderChartCostJalur(filtered, rate);
+    renderChartCountJalur(filtered);
   } else if (activePage==='driver') {
     renderTableDriver(filtered, rate);
   } else if (activePage==='detail') {

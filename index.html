@@ -231,6 +231,9 @@
     <div class="charts-grid">
       <div class="card" style="grid-column:span 2">
         <h2>Trend Avg OT Jam Harian — per Jalur (Top 6)</h2>
+        <div style="font-size:11px;color:#9ca3af;margin-bottom:8px">
+          Garis solid = Avg OT Jam (kiri) · Garis putus = Avg DP Aktual (kanan)
+        </div>
         <div style="position:relative;width:100%;height:280px"><canvas id="chart-trend-jalur"></canvas></div>
       </div>
     </div>
@@ -880,32 +883,76 @@ function renderChartTrendJalur(data) {
     .slice(0,6).map(([k])=>k);
 
   const colors = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
-  const datasets = top6.map((jalur,i) => {
+  const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
+
+  const datasets = [];
+  top6.forEach((jalur, i) => {
     const rows = jalurGroups[jalur];
-    const byDate = {};
-    rows.forEach(r=>{ if(!byDate[r.otDate]) byDate[r.otDate]=[]; byDate[r.otDate].push(r.otJam); });
-    const avg = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
-    return {
-      label: jalur,
-      data: dates.map(d => byDate[d] ? +avg(byDate[d]).toFixed(2) : null),
+    const byDateJam = {}, byDateDP = {};
+    rows.forEach(r => {
+      if (!byDateJam[r.otDate]) byDateJam[r.otDate] = [];
+      byDateJam[r.otDate].push(r.otJam);
+      if (r.aktualDP != null) {
+        if (!byDateDP[r.otDate]) byDateDP[r.otDate] = [];
+        byDateDP[r.otDate].push(r.aktualDP);
+      }
+    });
+
+    // OT Jam line (solid)
+    datasets.push({
+      label: `${jalur} — OT Jam`,
+      data: dates.map(d => byDateJam[d] ? +avg(byDateJam[d]).toFixed(2) : null),
       borderColor: colors[i], backgroundColor: colors[i]+'22',
-      tension: 0.3, pointRadius: 3, fill: false,
-      spanGaps: true
-    };
+      tension: 0.3, pointRadius: 3, fill: false, spanGaps: true,
+      yAxisID: 'yJam', borderWidth: 2,
+    });
+
+    // Avg DP line (dashed)
+    datasets.push({
+      label: `${jalur} — Avg DP`,
+      data: dates.map(d => byDateDP[d] ? +avg(byDateDP[d]).toFixed(1) : null),
+      borderColor: colors[i], backgroundColor: 'transparent',
+      tension: 0.3, pointRadius: 2, fill: false, spanGaps: true,
+      yAxisID: 'yDP', borderDash: [5, 4], borderWidth: 1.5,
+    });
   });
 
   if (chartTrendJalur) chartTrendJalur.destroy();
   chartTrendJalur = new Chart(document.getElementById('chart-trend-jalur'), {
     type: 'line',
     data: { labels: dates.map(fmtL), datasets },
-    options: { responsive: true, maintainAspectRatio: false,
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }},
-        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw} jam` }}
+        legend: {
+          position: 'bottom',
+          labels: { font: { size: 10 }, boxWidth: 20, padding: 8,
+            filter: (item) => !item.text.includes('Avg DP') || top6.indexOf(item.text.replace(' — Avg DP','')) === 0
+          }
+        },
+        tooltip: { callbacks: {
+          label: ctx => {
+            const unit = ctx.dataset.yAxisID === 'yJam' ? ' jam' : ' DP';
+            return `${ctx.dataset.label}: ${ctx.raw}${unit}`;
+          }
+        }},
+        datalabels: { display: false }
       },
       scales: {
         x: { ticks: { font: { size: 10 }, maxRotation: 45 }, grid: { display: false }},
-        y: { ticks: { callback: v => v+' jam', font: { size: 10 }}, grid: { color: 'rgba(0,0,0,0.05)' }}
+        yJam: {
+          type: 'linear', position: 'left',
+          ticks: { callback: v => v+' jam', font: { size: 10 }},
+          grid: { color: 'rgba(0,0,0,0.05)' },
+          title: { display: true, text: 'OT Jam', font: { size: 10 }, color: '#9ca3af' }
+        },
+        yDP: {
+          type: 'linear', position: 'right',
+          ticks: { callback: v => v+' DP', font: { size: 10 }},
+          grid: { display: false },
+          title: { display: true, text: 'Avg DP', font: { size: 10 }, color: '#9ca3af' }
+        }
       }
     }
   });

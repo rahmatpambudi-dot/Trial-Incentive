@@ -571,7 +571,11 @@ function renderChartDaily(data, rate) {
       {label:'Insentif DP',data:labels.map(d=>Math.round(byDate[d].ins)), backgroundColor:'#10b981',borderRadius:3},
     ]},
     options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmt(ctx.raw)}`}}},
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmt(ctx.raw)}`}},
+        datalabels:{display:ctx=>ctx.raw>2000000, anchor:'end', align:'end',
+          formatter:v=>v>=1e6?'Rp '+(v/1e6).toFixed(1)+'jt':'Rp '+(v/1e3).toFixed(0)+'rb',
+          font:{size:9}, color:'#555'}},
       scales:{x:{ticks:{font:{size:10},maxRotation:45},grid:{display:false}},
               y:{ticks:{callback:v=>'Rp '+(v/1e6).toFixed(1)+'jt',font:{size:10}},grid:{color:'rgba(0,0,0,0.05)'}}}}
   });
@@ -616,7 +620,9 @@ function renderChartDpJalur(data) {
       {label:'Standar DP',data:labels.map(j=>+avg(byJalur[j].std).toFixed(1)),   backgroundColor:'#f59e0b',borderRadius:3},
     ]},
     options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.raw} DP (avg)`}}},
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.raw} DP (avg)`}},
+        datalabels:{anchor:'end',align:'end',formatter:v=>v,font:{size:9},color:'#555'}},
       scales:{x:{ticks:{font:{size:10},maxRotation:45},grid:{display:false}},
               y:{ticks:{font:{size:10}},grid:{color:'rgba(0,0,0,0.05)'}}}}
   });
@@ -640,7 +646,14 @@ function renderChartSaving(data, rate) {
       fill:true,tension:0.3,pointRadius:3
     }]},
     options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`Saving: ${fmt(ctx.raw)}`}}},
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>`Saving: ${fmt(ctx.raw)}`}},
+        datalabels:{display:ctx=>{
+          const data=ctx.dataset.data; const i=ctx.dataIndex;
+          return i===0||i===data.length-1||i===Math.floor(data.length/2);
+        }, anchor:'top', align:'top',
+          formatter:v=>v>=1e6?'Rp '+(v/1e6).toFixed(1)+'jt':'',
+          font:{size:9}, color:'#10b981'}},
       scales:{x:{ticks:{font:{size:10},maxRotation:45},grid:{display:false}},
               y:{ticks:{callback:v=>'Rp '+(v/1e6).toFixed(1)+'jt',font:{size:10}},grid:{color:'rgba(0,0,0,0.05)'}}}}
   });
@@ -772,7 +785,8 @@ function renderChartAvgOtJalur(data) {
     options: { responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false },
         tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw} jam` }},
-        datalabels: { anchor: 'end', align: 'end', formatter: v => v+' jam', font: { size: 9 }, color: '#555' }
+        datalabels: { display: ctx => ctx.datasetIndex === 0, anchor: 'end', align: 'end',
+          formatter: v => v+' jam', font: { size: 9 }, color: '#555' }
       },
       scales: { x: { ticks: { font: { size: 10 }, maxRotation: 45 }, grid: { display: false }},
                 y: { ticks: { callback: v => v+' jam', font: { size: 10 }}, grid: { color: 'rgba(0,0,0,0.05)' }}}}
@@ -882,8 +896,9 @@ function renderChartCostJalur(data, rate) {
     options: { responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false },
         tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${fmt(ctx.raw)}` }},
-        datalabels: { display: ctx => ctx.raw > 0, anchor: 'end', align: 'end',
-          formatter: v => 'Rp '+(v/1e6).toFixed(1)+'jt', font: { size: 9 }, color: '#555' }
+        datalabels: { display: ctx => ctx.raw > 2000000, anchor: 'end', align: 'end',
+          formatter: v => v>=1e6?'Rp '+(v/1e6).toFixed(1)+'jt':'Rp '+(v/1e3).toFixed(0)+'rb',
+          font: { size: 9 }, color: '#555' }
       },
       scales: {
         x: { ticks: { font: { size: 10 }, maxRotation: 45 }, grid: { display: false }},

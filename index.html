@@ -96,6 +96,8 @@
     .badge.gray   { background: #f3f4f6; color: #6b7280; }
     .badge.blue   { background: #dbeafe; color: #1d4ed8; }
     .badge.purple { background: #ede9fe; color: #6d28d9; }
+    .btn-export { display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:7px;border:1px solid #e5e8ee;background:#fff;font-size:12px;font-weight:500;color:#374151;cursor:pointer;transition:background 0.15s; }
+    .btn-export:hover { background:#f9fafb; }
 
     @media (max-width: 900px) {
       .sidebar { display: none; }
@@ -320,15 +322,24 @@
         </div>
       </div>
       <div class="full-card">
-        <h2>TAT Corrupt — Nilai 1108xxx (Data Error di Sheets)</h2>
+        <h2 style="display:flex;align-items:center;justify-content:space-between">
+          TAT Corrupt — Nilai 1108xxx (Data Error di Sheets)
+          <button class="btn-export" onclick="exportCSV(window._exportCorrupt,'TAT_Corrupt.csv')">⬇ Export CSV</button>
+        </h2>
         <div class="table-wrap" id="table-corrupt"><div style="text-align:center;padding:2rem;color:#9ca3af">Memuat...</div></div>
       </div>
       <div class="full-card">
-        <h2>TAT Tidak Wajar — Lebih dari 24 Jam</h2>
+        <h2 style="display:flex;align-items:center;justify-content:space-between">
+          TAT Tidak Wajar — Lebih dari 24 Jam
+          <button class="btn-export" onclick="exportCSV(window._exportTatHigh,'TAT_Tidak_Wajar.csv')">⬇ Export CSV</button>
+        </h2>
         <div class="table-wrap" id="table-tat-high"><div style="text-align:center;padding:2rem;color:#9ca3af">Memuat...</div></div>
       </div>
       <div class="full-card">
-        <h2>OT Tidak Terpair ke LC</h2>
+        <h2 style="display:flex;align-items:center;justify-content:space-between">
+          OT Tidak Terpair ke LC
+          <button class="btn-export" onclick="exportCSV(window._exportUnmatch,'OT_Unmatch.csv')">⬇ Export CSV</button>
+        </h2>
         <div class="table-wrap" id="table-unmatch"><div style="text-align:center;padding:2rem;color:#9ca3af">Memuat...</div></div>
       </div>
 
@@ -1118,6 +1129,19 @@ function renderDataQuality() {
   document.getElementById('dq-verdict').style.color = color;
 }
 
+function exportCSV(data, filename) {
+  if (!data || !data.length) return;
+  const cols = Object.keys(data[0]);
+  const csv = [cols.join(','), ...data.map(r => cols.map(c => {
+    const v = r[c] != null ? String(r[c]) : '';
+    return v.includes(',') || v.includes('"') || v.includes('\n') ? `"${v.replace(/"/g,'""')}"` : v;
+  }).join(','))].join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = filename;
+  a.click();
+}
+
 // Sort state untuk tabel anomali
 let anomaliSort = { corrupt: {col:null,asc:true}, tatHigh: {col:null,asc:true}, unmatch: {col:null,asc:true} };
 
@@ -1163,6 +1187,9 @@ function renderAnomali() {
   if (anomaliSort.tatHigh.col) tatHigh = sortRows(tatHigh, anomaliSort.tatHigh.col, anomaliSort.tatHigh.asc);
   if (anomaliSort.unmatch.col) unmatch = sortRows(unmatch, anomaliSort.unmatch.col, anomaliSort.unmatch.asc);
 
+  window._exportCorrupt = corrupt.map(r=>({TRANSNO:r.TRANSNO,Driver:r.DriverName,BU:r.Owner,Tanggal:r.PLANDELIVERYDATE,'TAT Raw':r.TAT,'TAT Jam':r._jam?r._jam.toFixed(0)+' jam':''}));
+  window._exportTatHigh = tatHigh.map(r=>({TRANSNO:r.TRANSNO,Driver:r.DriverName,BU:r.Owner,Tanggal:r.PLANDELIVERYDATE,'TAT Raw':r.TAT,'TAT Jam':r._jam?r._jam.toFixed(1)+' jam':''}));
+  window._exportUnmatch = unmatch.map(r=>({Tanggal:fmtD(r.otDate),Driver:r.empName,BU:r.bu,'LC Extracted':r.lcNo||'','Deskripsi OT':r.desc,'OT Jam':r.otJam.toFixed(2),'Biaya OT':Math.round(r.biayaOT)}));
   document.getElementById('count-corrupt').textContent = corrupt.length;
   document.getElementById('count-tat-high').textContent = tatHigh.length;
   document.getElementById('count-unmatch').textContent = unmatch.length;

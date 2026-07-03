@@ -467,8 +467,11 @@ function pairData(lcData, otData, klsHoData) {
     }
     const otDate= String(ot['OT Date']||'').slice(0,10);
     const empId = String(ot['Employee ID']||'').trim();
-    const bu    = extractBU(ot['Organization Name']||'');
-    const siteBu = ot['Site BU']||'';
+    const siteBuRaw = (ot['Site BU']||'').trim();
+    const siteBu = (siteBuRaw && siteBuRaw !== '#N/A' && siteBuRaw !== 'nan') ? siteBuRaw : '';
+    // BU: ambil dari Site BU dulu, fallback ke regex Organization Name
+    const buFromSite = siteBu ? siteBu.replace(/\s*(JABABEKA|DC|JBKK?)\s*/gi,'').trim() : '';
+    const bu = buFromSite || extractBU(ot['Organization Name']||'');
 
     let lc = null, matchMethod = 'No Match';
     if (lcNo && lcIdx[lcNo]) { lc = lcIdx[lcNo]; matchMethod = 'LC Number'; }

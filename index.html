@@ -1161,7 +1161,6 @@ function renderAll() {
   if (activePage==='anomali') { renderAnomali(); return; }
   if (activePage==='overview') {
     renderChartDaily(filtered, rate);
-    renderChartGap(filtered);
     renderChartDpJalur(filtered);
     renderChartSaving(filtered, rate);
     if (activePage === 'overview') {

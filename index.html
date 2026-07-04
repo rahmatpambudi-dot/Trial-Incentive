@@ -1073,7 +1073,7 @@ function renderPageJalur(data, rate) {
       if (r.aktualDP != null) byDate[r.otDate].dp.push(r.aktualDP);
     });
 
-    const canvasId = `jalur-chart-${jalur.replace(/\s+/g,'-')}`;
+    const canvasId = `jalur-chart-${jalurs.indexOf(jalur)}`;
 
     // Card HTML
     const card = document.createElement('div');

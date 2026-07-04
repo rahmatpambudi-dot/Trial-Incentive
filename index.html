@@ -384,13 +384,18 @@ const fmtD = d => { if(!d) return ''; const [y,m,day]=d.split('-'); return `${da
 const fmtL = d => { if(!d) return ''; const [y,m,day]=d.split('-'); return `${day}/${m}`; };
 
 function switchPage(page) {
-  activePage = page;
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
-  const pageEl = document.getElementById('page-'+page);
-  if (pageEl) pageEl.classList.add('active');
-  document.querySelector(`[onclick="switchPage('${page}')"]`).classList.add('active');
-  renderAll();
+  try {
+    activePage = page;
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
+    const pageEl = document.getElementById('page-'+page);
+    if (pageEl) pageEl.classList.add('active');
+    else console.error('page not found:', 'page-'+page);
+    const tabEl = document.querySelector(`[onclick="switchPage('${page}')"]`);
+    if (tabEl) tabEl.classList.add('active');
+    console.log('switchPage:', page, 'pairedData:', pairedData.length);
+    renderAll();
+  } catch(e) { console.error('switchPage error:', e); }
 }
 
 function extractRitLCs(desc) {

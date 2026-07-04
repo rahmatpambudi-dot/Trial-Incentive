@@ -289,7 +289,7 @@
     <!-- PAGE 5: ANALISIS JALUR -->
     <div class="page" id="page-jalur">
       <div style="font-size:12px;color:#9ca3af;margin-bottom:16px">
-        Menampilkan jalur <b>Dalam Kota</b> yang ada data OT-nya. Dual axis: garis solid = Avg OT Jam, garis putus = Avg DP Aktual.
+        Menampilkan jalur <b>Dalam Kota</b> yang ada data OT-nya (Luar Kota dikecualikan). Dual axis: garis solid = Avg OT Jam, garis putus = Avg DP Aktual.
       </div>
       <div id="jalur-charts-container" style="display:grid;grid-template-columns:1fr 1fr;gap:16px"></div>
     </div>
@@ -1036,12 +1036,12 @@ function renderChartCountJalur(data) {
 }
 
 function renderPageJalur(data, rate) {
-  const DALAM_KOTA_KEYWORDS = ['Jakarta','Bekasi','Depok','Bogor','Tangerang','Karawang','Purwakarta','Cikarang'];
+  const LUAR_KOTA_KEYWORDS = ['Bandung','Cirebon','Sukabumi','Subang','Serang','Rangkas','Cilegon','Majalengka','Jatinangor'];
   const dates = [...new Set(data.map(r=>r.otDate).filter(Boolean))].sort();
 
-  // Filter jalur dalam kota
+  // Filter jalur - exclude Luar Kota
   const jalurSet = {};
-  data.filter(r => r.jalur && DALAM_KOTA_KEYWORDS.some(k => r.jalur.includes(k))).forEach(r => {
+  data.filter(r => r.jalur && !LUAR_KOTA_KEYWORDS.some(k => r.jalur.includes(k))).forEach(r => {
     if (!jalurSet[r.jalur]) jalurSet[r.jalur] = [];
     jalurSet[r.jalur].push(r);
   });

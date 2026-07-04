@@ -941,8 +941,10 @@ function renderChartTrendJalur(data) {
     });
   });
 
+  const trendEl = document.getElementById('chart-trend-jalur');
+  if (!trendEl) return;
   if (chartTrendJalur) chartTrendJalur.destroy();
-  chartTrendJalur = new Chart(document.getElementById('chart-trend-jalur'), {
+  chartTrendJalur = new Chart(trendEl, {
     type: 'line',
     data: { labels: dates.map(fmtL), datasets },
     options: {
@@ -1045,12 +1047,16 @@ function renderPageJalur(data, rate) {
   });
 
   const jalurs = Object.keys(jalurSet).sort();
+  console.log('renderPageJalur: jalurs found:', jalurs.length, jalurs.slice(0,5));
   const container = document.getElementById('jalur-charts-container');
+  if (!container) { console.error('jalur-charts-container not found'); return; }
   container.innerHTML = '';
 
-  // Destroy old charts
-  Object.values(jalurCharts).forEach(c => c.destroy());
-  Object.keys(jalurCharts).forEach(k => delete jalurCharts[k]);
+  // Destroy old charts safely
+  Object.keys(jalurCharts).forEach(k => {
+    try { jalurCharts[k].destroy(); } catch(e) {}
+    delete jalurCharts[k];
+  });
 
   const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
 

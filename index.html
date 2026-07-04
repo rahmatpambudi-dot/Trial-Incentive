@@ -183,6 +183,7 @@
     <div class="page-tab" onclick="switchPage('driver')">👤 Rekap Driver</div>
     <div class="page-tab" onclick="switchPage('detail')">🔍 Detail Pairing</div>
     <div class="page-tab" onclick="switchPage('anomali')">⚠️ Data Anomali</div>
+    <div class="page-tab" onclick="switchPage('jalur')">📍 Analisis Jalur</div>
   </div>
 
   <div class="content">
@@ -285,6 +286,14 @@
       </div>
     </div>
 
+    <!-- PAGE 5: ANALISIS JALUR -->
+    <div class="page" id="page-jalur">
+      <div style="font-size:12px;color:#9ca3af;margin-bottom:16px">
+        Menampilkan jalur <b>Dalam Kota</b> yang ada data OT-nya. Dual axis: garis solid = Avg OT Jam, garis putus = Avg DP Aktual.
+      </div>
+      <div id="jalur-charts-container" style="display:grid;grid-template-columns:1fr 1fr;gap:16px"></div>
+    </div>
+
     <!-- PAGE 4: DATA ANOMALI -->
     <div class="page" id="page-anomali">
       <!-- DATA QUALITY SCORE -->
@@ -382,6 +391,7 @@ function getLangsirStdTrip(desc) {
 
 let pairedData = [];
 let chartDaily, chartGap, chartDpJalur, chartSaving, chartAvgOtJalur, chartOtKategori, chartTrendJalur, chartCostJalur, chartCountJalur;
+const jalurCharts = {};
 let activePage = 'overview';
 
 const fmt  = n => 'Rp ' + Math.round(n).toLocaleString('id-ID');
@@ -393,7 +403,8 @@ function switchPage(page) {
   activePage = page;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('page-'+page).classList.add('active');
+  const pageEl = document.getElementById('page-'+page);
+  if (pageEl) pageEl.classList.add('active');
   document.querySelector(`[onclick="switchPage('${page}')"]`).classList.add('active');
   renderAll();
 }
@@ -1021,6 +1032,117 @@ function renderChartCountJalur(data) {
         y: { ticks: { font: { size: 10 }}, grid: { color: 'rgba(0,0,0,0.05)' }}
       }
     }
+  });
+}
+
+function renderPageJalur(data, rate) {
+  const DALAM_KOTA_KEYWORDS = ['Jakarta','Bekasi','Depok','Bogor','Tangerang','Karawang','Purwakarta','Cikarang'];
+  const dates = [...new Set(data.map(r=>r.otDate).filter(Boolean))].sort();
+
+  // Filter jalur dalam kota
+  const jalurSet = {};
+  data.filter(r => r.jalur && DALAM_KOTA_KEYWORDS.some(k => r.jalur.includes(k))).forEach(r => {
+    if (!jalurSet[r.jalur]) jalurSet[r.jalur] = [];
+    jalurSet[r.jalur].push(r);
+  });
+
+  const jalurs = Object.keys(jalurSet).sort();
+  const container = document.getElementById('jalur-charts-container');
+  container.innerHTML = '';
+
+  // Destroy old charts
+  Object.values(jalurCharts).forEach(c => c.destroy());
+  Object.keys(jalurCharts).forEach(k => delete jalurCharts[k]);
+
+  const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
+
+  jalurs.forEach(jalur => {
+    const rows = jalurSet[jalur];
+    const totalDrivers = new Set(rows.map(r=>r.empId)).size;
+    const totalBiaya = rows.reduce((s,r)=>s+r.biayaOT,0);
+    const totalIns = rows.reduce((s,r)=>s+computeInsentif(r,rate),0);
+
+    const byDate = {};
+    rows.forEach(r => {
+      if (!byDate[r.otDate]) byDate[r.otDate] = {jam:[], dp:[]};
+      byDate[r.otDate].jam.push(r.otJam);
+      if (r.aktualDP != null) byDate[r.otDate].dp.push(r.aktualDP);
+    });
+
+    const canvasId = `jalur-chart-${jalur.replace(/\s+/g,'-')}`;
+
+    // Card HTML
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <div>
+          <h2 style="margin-bottom:4px">${jalur}</h2>
+          <div style="display:flex;gap:12px;font-size:11px;color:#9ca3af">
+            <span>👤 ${totalDrivers} driver</span>
+            <span>💰 ${fmtS(totalBiaya)} OT</span>
+            <span>🎯 ${fmtS(totalIns)} insentif</span>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:#9ca3af;margin-bottom:6px">
+        <span style="border-bottom:2px solid #3b82f6;padding-bottom:1px;margin-right:8px">— OT Jam (kiri)</span>
+        <span style="border-bottom:2px dashed #3b82f6;padding-bottom:1px">- - Avg DP (kanan)</span>
+      </div>
+      <div style="position:relative;width:100%;height:200px"><canvas id="${canvasId}"></canvas></div>
+    `;
+    container.appendChild(card);
+
+    // Chart
+    const ctx = document.getElementById(canvasId);
+    jalurCharts[canvasId] = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: dates.map(fmtL),
+        datasets: [
+          {
+            label: 'Avg OT Jam',
+            data: dates.map(d => byDate[d] ? +avg(byDate[d].jam).toFixed(2) : null),
+            borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.08)',
+            tension: 0.3, pointRadius: 3, fill: true, spanGaps: true,
+            yAxisID: 'yJam', borderWidth: 2,
+          },
+          {
+            label: 'Avg DP',
+            data: dates.map(d => byDate[d]?.dp?.length ? +avg(byDate[d].dp).toFixed(1) : null),
+            borderColor: '#10b981', backgroundColor: 'transparent',
+            tension: 0.3, pointRadius: 2, fill: false, spanGaps: true,
+            yAxisID: 'yDP', borderDash: [5,4], borderWidth: 1.5,
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          datalabels: { display: false },
+          tooltip: { callbacks: {
+            label: ctx => ctx.dataset.yAxisID === 'yJam'
+              ? `OT Jam: ${ctx.raw} jam`
+              : `Avg DP: ${ctx.raw} DP`
+          }}
+        },
+        scales: {
+          x: { ticks: { font: { size: 9 }, maxRotation: 45 }, grid: { display: false }},
+          yJam: {
+            type: 'linear', position: 'left',
+            ticks: { callback: v => v+' jam', font: { size: 9 }},
+            grid: { color: 'rgba(0,0,0,0.04)' }
+          },
+          yDP: {
+            type: 'linear', position: 'right',
+            ticks: { callback: v => v+' DP', font: { size: 9 }},
+            grid: { display: false }
+          }
+        }
+      }
+    });
   });
 }
 

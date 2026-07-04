@@ -613,25 +613,35 @@ function renderChartDaily(data, rate) {
   const byDate = {};
   data.forEach(r => {
     if(!r.otDate) return;
-    if(!byDate[r.otDate]) byDate[r.otDate]={ot:0,ins:0};
+    if(!byDate[r.otDate]) byDate[r.otDate]={ot:0,ins:0,dp:[]};
     byDate[r.otDate].ot  += r.biayaOT;
     byDate[r.otDate].ins += computeInsentif(r,rate);
+    if(r.aktualDP!=null) byDate[r.otDate].dp.push(r.aktualDP);
   });
   const labels = Object.keys(byDate).sort();
+  const avgArr = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
   if (chartDaily) chartDaily.destroy();
   chartDaily = new Chart(document.getElementById('chart-daily'),{
-    type:'bar', data:{labels:labels.map(fmtL), datasets:[
-      {label:'Biaya OT',   data:labels.map(d=>Math.round(byDate[d].ot)),  backgroundColor:'#3b82f6',borderRadius:3},
-      {label:'Insentif DP',data:labels.map(d=>Math.round(byDate[d].ins)), backgroundColor:'#10b981',borderRadius:3},
+    type:'bar',
+    data:{labels:labels.map(fmtL), datasets:[
+      {label:'Biaya OT',   data:labels.map(d=>Math.round(byDate[d].ot)),  backgroundColor:'#3b82f6',borderRadius:3,yAxisID:'yRp'},
+      {label:'Insentif DP',data:labels.map(d=>Math.round(byDate[d].ins)), backgroundColor:'#10b981',borderRadius:3,yAxisID:'yRp'},
+      {label:'Avg DP', type:'line',
+        data:labels.map(d=>byDate[d].dp.length?+avgArr(byDate[d].dp).toFixed(1):null),
+        borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,0.08)',
+        tension:0.3,pointRadius:4,pointBackgroundColor:'#f59e0b',
+        fill:false,spanGaps:true,yAxisID:'yDP',borderWidth:2,order:0},
     ]},
     options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},
-        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmt(ctx.raw)}`}},
-        datalabels:{display:ctx=>ctx.raw>2000000, anchor:'end', align:'end',
-          formatter:v=>v>=1e6?'Rp '+(v/1e6).toFixed(1)+'jt':'Rp '+(v/1e3).toFixed(0)+'rb',
-          font:{size:9}, color:'#555'}},
-      scales:{x:{ticks:{font:{size:10},maxRotation:45},grid:{display:false}},
-              y:{ticks:{callback:v=>'Rp '+(v/1e6).toFixed(1)+'jt',font:{size:10}},grid:{color:'rgba(0,0,0,0.05)'}}}}
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},datalabels:{display:false},
+        tooltip:{callbacks:{label:ctx=>ctx.dataset.label==='Avg DP'?`Avg DP: ${ctx.raw} DP`:`${ctx.dataset.label}: ${fmt(ctx.raw)}`}}},
+      scales:{
+        x:{ticks:{font:{size:10},maxRotation:45},grid:{display:false}},
+        yRp:{type:'linear',position:'left',ticks:{callback:v=>'Rp '+(v/1e6).toFixed(1)+'jt',font:{size:10}},grid:{color:'rgba(0,0,0,0.05)'}},
+        yDP:{type:'linear',position:'right',ticks:{callback:v=>v+' DP',font:{size:10}},grid:{display:false},
+          title:{display:true,text:'Avg DP',font:{size:10},color:'#f59e0b'}}
+      }}
   });
 }
 

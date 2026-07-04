@@ -390,10 +390,8 @@ function switchPage(page) {
     document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
     const pageEl = document.getElementById('page-'+page);
     if (pageEl) pageEl.classList.add('active');
-    else console.error('page not found:', 'page-'+page);
     const tabEl = document.querySelector(`[onclick="switchPage('${page}')"]`);
     if (tabEl) tabEl.classList.add('active');
-    console.log('switchPage:', page, 'pairedData:', pairedData.length);
     renderAll();
   } catch(e) { console.error('switchPage error:', e); }
 }
@@ -1047,9 +1045,8 @@ function renderPageJalur(data, rate) {
   });
 
   const jalurs = Object.keys(jalurSet).sort();
-  console.log('renderPageJalur: jalurs found:', jalurs.length, jalurs.slice(0,5));
   const container = document.getElementById('jalur-charts-container');
-  if (!container) { console.error('jalur-charts-container not found'); return; }
+  if (!container) return;
   container.innerHTML = '';
 
   // Destroy old charts safely

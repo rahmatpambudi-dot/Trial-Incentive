@@ -1315,8 +1315,18 @@ function renderAnomali() {
   }
   const lc = window._rawLC;
 
-  let corrupt = lc.filter(r => { const h = tatToHours(r.TAT); return h !== null && h > 100000; }).map(r => ({...r, _jam: tatToHours(r.TAT)}));
-  let tatHigh = lc.filter(r => { const h = tatToHours(r.TAT); return h !== null && h > 24 && h <= 100000; }).map(r => ({...r, _jam: tatToHours(r.TAT)}));
+  // Filter LC sesuai periode tanggal filter
+  const from = document.getElementById('filter-date-from').value || '';
+  const to = document.getElementById('filter-date-to').value || '';
+  const lcFiltered = lc.filter(r => {
+    if (!r.PLANDELIVERYDATE) return false;
+    if (from && r.PLANDELIVERYDATE < from) return false;
+    if (to && r.PLANDELIVERYDATE > to) return false;
+    return true;
+  });
+
+  let corrupt = lcFiltered.filter(r => { const h = tatToHours(r.TAT); return h !== null && h > 100000; }).map(r => ({...r, _jam: tatToHours(r.TAT)}));
+  let tatHigh = lcFiltered.filter(r => { const h = tatToHours(r.TAT); return h !== null && h > 24 && h <= 100000; }).map(r => ({...r, _jam: tatToHours(r.TAT)}));
   let unmatch = pairedData.filter(r => r.matchMethod === 'No Match');
 
   if (anomaliSort.corrupt.col) corrupt = sortRows(corrupt, anomaliSort.corrupt.col, anomaliSort.corrupt.asc);

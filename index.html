@@ -570,6 +570,9 @@ function populateFilters(data) {
   jalurs.forEach(j => { const o=document.createElement('option'); o.value=j; o.textContent=j; fJ.appendChild(o); });
   const fD = document.getElementById('filter-delivery');
   delivs.forEach(d => { const o=document.createElement('option'); o.value=d; o.textContent=d; fD.appendChild(o); });
+  const kats = [...new Set(data.map(r=>r.kategoriOT).filter(k=>k&&k!=='nan'&&k!==''))].sort();
+  const fK = document.getElementById('filter-kategori');
+  kats.forEach(k => { const o=document.createElement('option'); o.value=k; o.textContent=k; fK.appendChild(o); });
 }
 
 function filterData() {
@@ -578,11 +581,13 @@ function filterData() {
   const bu    = document.getElementById('filter-bu').value;
   const jalur = document.getElementById('filter-jalur').value;
   const deliv = document.getElementById('filter-delivery').value;
+  const kategori = document.getElementById('filter-kategori').value;
   return pairedData.filter(r =>
     (!from||r.otDate>=from) && (!to||r.otDate<=to) &&
     (bu==='all'||r.bu===bu) &&
     (jalur==='all'||r.jalur===jalur) &&
-    (deliv==='all'||r.delivType===deliv)
+    (deliv==='all'||r.delivType===deliv) &&
+    (kategori==='all'||r.kategoriOT===kategori)
   );
 }
 
@@ -1400,7 +1405,7 @@ async function loadData() {
     populateFilters(pairedData);
     // Render active page after data fully loaded
     setTimeout(() => { renderAll(); }, 100);
-    ['filter-date-from','filter-date-to','filter-bu','filter-jalur','filter-delivery','filter-scenario','filter-ot-source'].forEach(id => {
+    ['filter-date-from','filter-date-to','filter-bu','filter-jalur','filter-delivery','filter-kategori','filter-scenario','filter-ot-source'].forEach(id => {
       document.getElementById(id).addEventListener('change', renderAll);
     });
   } catch(e) {

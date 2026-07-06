@@ -1398,6 +1398,8 @@ async function loadData() {
     setDateRangeBounds(pairedData);
     populateFilters(pairedData);
     renderAll();
+    // If jalur tab active on load, render it after data ready
+    if (activePage === 'jalur') renderPageJalur(pairedData, getRate());
     ['filter-date-from','filter-date-to','filter-bu','filter-jalur','filter-delivery','filter-scenario','filter-ot-source'].forEach(id => {
       document.getElementById(id).addEventListener('change', renderAll);
     });

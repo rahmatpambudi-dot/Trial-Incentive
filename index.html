@@ -1094,8 +1094,9 @@ function renderPageJalur(data, rate) {
     `;
     container.appendChild(card);
 
-    // Chart
-    const ctx = document.getElementById(canvasId);
+    // Chart - get canvas AFTER append to DOM
+    const ctx = card.querySelector('canvas');
+    if (!ctx) { console.error('canvas not found for', jalur); return; }
     jalurCharts[canvasId] = new Chart(ctx, {
       type: 'line',
       data: {

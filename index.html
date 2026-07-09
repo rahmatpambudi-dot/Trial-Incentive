@@ -1045,9 +1045,6 @@ function renderChartCountJalur(data) {
 }
 
 function renderPageJalur(data, rate) {
-  // Ensure DOM is ready before rendering
-  const container = document.getElementById('jalur-charts-container');
-  if (!container) return;
   const dates = [...new Set(data.map(r=>r.otDate).filter(Boolean))].sort();
 
   // Group by jalur - semua jalur yang ada data

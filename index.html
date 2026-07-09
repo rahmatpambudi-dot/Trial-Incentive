@@ -350,7 +350,6 @@ const LC_CSV = 'data/lc_data.csv';
 const OT_CSV = 'data/ot_data.csv';
 const KLS_HO_CSV = 'data/kls_ho_data.csv';
 const TARIKAN_KLL_CSV = 'data/tarikan_kll_data.csv';
-const PAIRED_CSV = 'data/paired_data.csv';
 
 const STD_CUSTOMER   = {'Bekasi':7,'Karawang Selatan':7,'Jakarta Timur':6,'Jakarta Selatan':5,'Jakarta Utara':5,'Jakarta Barat':5,'Jakarta Pusat':5,'Karawang Utara':5,'Purwakarta':5,'Depok':4,'Bogor':4,'Tangerang':2};
 const STD_STORE_KECIL= {'Bekasi':4,'Karawang Selatan':4,'Jakarta Timur':3,'Jakarta Selatan':3,'Jakarta Barat':3,'Jakarta Pusat':3,'Karawang Utara':3,'Purwakarta':3,'Jakarta Utara':2,'Depok':2,'Bogor':2,'Tangerang':1};
@@ -1389,212 +1388,51 @@ function renderAnomali() {
 }
 async function loadData() {
   try {
-    // Load pre-processed paired data (fast, 129KB)
-    const [pairedRes, kllRes] = await Promise.all([
-      fetch(PAIRED_CSV+'?t='+Date.now()),
+    const [lcRes, otRes, klsHoRes, kllRes] = await Promise.all([
+      fetch(LC_CSV+'?t='+Date.now()),
+      fetch(OT_CSV+'?t='+Date.now()),
+      fetch(KLS_HO_CSV+'?t='+Date.now()).catch(()=>null),
       fetch(TARIKAN_KLL_CSV+'?t='+Date.now()).catch(()=>null)
     ]);
-    if (!pairedRes.ok) throw new Error('Paired data tidak ditemukan');
-
-    const pairedText = await pairedRes.text();
-    const rawPaired = Papa.parse(pairedText,{header:true,skipEmptyLines:true}).data;
-
-    // Convert CSV rows to pairedData format
-    const RATE_OT = 51494;
-    const STD_CUSTOMER = {'Bekasi':7,'Karawang Selatan':7,'Jakarta Timur':6,'Jakarta Selatan':5,'Jakarta Utara':5,'Jakarta Barat':5,'Jakarta Pusat':5,'Karawang Utara':5,'Purwakarta':5,'Depok':4,'Bogor':4,'Tangerang':2};
-    const STD_STORE_KECIL = {'Bekasi':4,'Karawang Selatan':4,'Jakarta Timur':3,'Jakarta Selatan':3,'Jakarta Barat':3,'Jakarta Pusat':3,'Karawang Utara':3,'Purwakarta':3,'Jakarta Utara':2,'Depok':2,'Bogor':2,'Tangerang':1};
-    const STD_STORE_BESAR = {'Bekasi':2,'Karawang Selatan':2,'Jakarta Timur':2,'Jakarta Selatan':1,'Jakarta Utara':1,'Jakarta Barat':1,'Jakarta Pusat':1,'Karawang Utara':1,'Purwakarta':1,'Depok':1,'Bogor':1,'Tangerang':1};
-    const STD_LANGSIRAN_TRIP = {'DC 10':4,'DC10':4,'DC 5':4,'DC5':4,'JURONG':3,'KITTIC':2,'KITIC':2,'DELTA 8':2,'DELTA8':2};
-    const ARMADA_BESAR = ['FUSO','WINGBOX','CONT-40'];
-    const JAM_EFEKTIF = 8.0;
-
-    function tatToHoursLocal(tat) {
-      if (!tat) return null;
-      const p = String(tat).split(':');
-      if (p.length < 2) return null;
-      const h = parseInt(p[0]) + parseInt(p[1])/60 + (parseInt(p[2]||0)/3600);
-      return h > 100000 ? null : h;
+    if (!lcRes.ok) throw new Error('LC data tidak ditemukan');
+    if (!otRes.ok) throw new Error('OT data tidak ditemukan');
+    const [lcText, otText] = await Promise.all([lcRes.text(), otRes.text()]);
+    const rawLC = Papa.parse(lcText,{header:true,skipEmptyLines:true}).data;
+    const rawOT = Papa.parse(otText,{header:true,skipEmptyLines:true}).data;
+    let rawKlsHo = [];
+    if (klsHoRes && klsHoRes.ok) {
+      const klsHoText = await klsHoRes.text();
+      rawKlsHo = Papa.parse(klsHoText,{header:true,skipEmptyLines:true}).data;
     }
-
-    pairedData = rawPaired.map(r => {
-      const otJam = parseFloat(r.otJam)||0;
-      const biayaOT = otJam * RATE_OT;
-      const aktualDP = r.aktualDP !== '' ? parseFloat(r.aktualDP) : null;
-      const kat = (r.kategoriOT||'').trim().toUpperCase();
-      const isRitase = kat === 'RITASE';
-      const isLangsir = kat === 'LANGSIR';
-      const armada = (r.armada||'').toUpperCase();
-      const isBesar = ARMADA_BESAR.some(b => armada.includes(b));
-
-      let stdDP = null, gapDP = null, gapTAT = null, totalTAT = null, delivType = null;
-
-      if (isRitase) {
-        delivType = 'Ritase';
-        const tatH = tatToHoursLocal(r.tat);
-        totalTAT = tatH;
-        gapTAT = tatH !== null ? tatH - JAM_EFEKTIF : null;
-      } else if (isLangsir) {
-        delivType = 'Langsiran';
-        const desc = r.desc||'';
-        const rits = extractRitLCs(desc);
-        const aktualTrip = rits.length;
-        const d = desc.toUpperCase();
-        let stdTrip = null;
-        for (const [k,v] of Object.entries(STD_LANGSIRAN_TRIP)) { if(d.includes(k)){stdTrip=v;break;} }
-        stdDP = stdTrip;
-        aktualDP !== null ? null : null;
-        gapTAT = stdTrip !== null ? aktualTrip - stdTrip : null;
-        totalTAT = aktualTrip;
-      } else {
-        const lc7 = (r.lcNo||'')[6]?.toUpperCase();
-        if (lc7==='C') delivType='Customer';
-        else if (['A','B','D','S'].includes(lc7)) delivType='Store';
-        else delivType = r.kategoriOT||null;
-
-        if (delivType==='Customer') stdDP = STD_CUSTOMER[r.jalur]||null;
-        else if (delivType==='Store') stdDP = isBesar ? (STD_STORE_BESAR[r.jalur]||null) : (STD_STORE_KECIL[r.jalur]||null);
-        gapDP = (aktualDP!=null && stdDP!=null) ? aktualDP-stdDP : null;
-      }
-
-      return {
-        empId: r.empId, empName: r.empName, otDate: r.otDate,
-        otJam, biayaOT, bu: r.bu, siteBu: r.siteBU,
-        desc: r.desc, lcNo: r.lcNo, matchMethod: r.matchMethod,
-        jalur: r.jalur, armada: r.armada, delivType,
-        stdDP, aktualDP, gapDP, tat: r.tat,
-        kategoriOT: r.kategoriOT, isRitase, isLangsir,
-        ritLCs: [], ritTATs: [], totalTAT, gapTAT
-      };
-    });
-
-    // Also load tarikan KLL if available for switching source
-    window._rawKLL = [];
+    let rawKLL = [];
     if (kllRes && kllRes.ok) {
       const kllText = await kllRes.text();
-      window._rawKLL = Papa.parse(kllText,{header:true,skipEmptyLines:true}).data;
+      rawKLL = Papa.parse(kllText,{header:true,skipEmptyLines:true}).data;
     }
-    window._rawLC = [];
-    window._rawOT = rawPaired;
+    window._rawLC = rawLC;
+    window._rawOT = rawOT;
+    window._rawKlsHo = rawKlsHo;
+    window._rawKLL = rawKLL;
 
+    const src = document.getElementById('filter-ot-source').value;
+    const activeOT = src === 'tarikan_kll' ? rawKLL : rawOT;
+    pairedData = pairData(rawLC, activeOT, rawKlsHo);
     setDateRangeBounds(pairedData);
     populateFilters(pairedData);
+    // Render active page after data fully loaded
     setTimeout(() => { renderAll(); }, 100);
-
-    const dates = pairedData.map(r=>r.otDate).filter(Boolean).sort();
-    const maxDate = dates[dates.length-1];
-    const fmtD = d => { if(!d) return ''; const [y,m,day]=d.split('-'); return `${day}/${m}/${y}`; };
-    document.getElementById('badge-update').innerHTML = `● Update: ${fmtD(maxDate)}`;
-    document.getElementById('badge-update').style.background = '#e8f5f0';
-    document.getElementById('badge-update').style.color = '#0f6e56';
-
+    ['filter-date-from','filter-date-to','filter-bu','filter-jalur','filter-delivery','filter-kategori','filter-scenario','filter-ot-source'].forEach(id => {
+      document.getElementById(id).addEventListener('change', renderAll);
+    });
   } catch(e) {
     document.getElementById('badge-update').innerHTML = '⚠️ ' + e.message;
     document.getElementById('badge-update').style.background = '#fee2e2';
     document.getElementById('badge-update').style.color = '#991b1b';
     console.error(e);
   }
-}/cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-  <script>Chart.register(ChartDataLabels);</script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', sans-serif; background: #f0f2f5; color: #1e2a3a; min-height: 100vh; display: flex; }
+}
 
-    /* SIDEBAR */
-    .sidebar { width: 220px; min-height: 100vh; background: #1e2d4a; display: flex; flex-direction: column; flex-shrink: 0; position: sticky; top: 0; height: 100vh; }
-    .sidebar-brand { padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 12px; }
-    .brand-icon { width: 36px; height: 36px; background: #3b82f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; flex-shrink: 0; }
-    .brand-text .brand-name { font-size: 14px; font-weight: 700; color: #fff; }
-    .brand-text .brand-sub { font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: 0.05em; text-transform: uppercase; }
-    .sidebar-section { padding: 20px 20px 4px; }
-    .sidebar-section-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 8px; }
-    .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; font-size: 13px; color: rgba(255,255,255,0.6); cursor: pointer; margin-bottom: 2px; text-decoration: none; transition: background 0.15s, color 0.15s; }
-    .sidebar-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
-    .sidebar-item.active { background: rgba(59,130,246,0.25); color: #fff; }
-    .sidebar-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-
-    /* MAIN */
-    .main { flex: 1; display: flex; flex-direction: column; min-height: 100vh; overflow: hidden; }
-    .topbar { background: #fff; border-bottom: 1px solid #e5e8ee; padding: 0 28px; height: 56px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; position: sticky; top: 0; z-index: 10; }
-    .topbar-title { font-size: 16px; font-weight: 600; color: #1e2a3a; }
-    .topbar-right { display: flex; align-items: center; gap: 10px; }
-    .tag { background: #f0f2f5; border: 1px solid #e0e3eb; border-radius: 6px; padding: 5px 12px; font-size: 12px; color: #4b5563; font-weight: 500; }
-    .badge-update { display: inline-flex; align-items: center; gap: 6px; background: #e8f5f0; color: #0f6e56; border: 1px solid #b8ddd4; border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 500; }
-    .dot-pulse { width: 7px; height: 7px; border-radius: 50%; background: #10b981; animation: pulse 2s infinite; display: inline-block; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-
-    /* FILTERS BAR */
-    .filters-bar { background: #fff; border-bottom: 1px solid #e5e8ee; padding: 12px 28px; display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; position: sticky; top: 56px; z-index: 9; }
-    .filter-group { display: flex; flex-direction: column; gap: 4px; }
-    .filter-group label { font-size: 10px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.06em; }
-    select, input[type="date"] { padding: 6px 10px; border-radius: 7px; border: 1px solid #e5e8ee; font-size: 13px; background: #fff; font-family: 'Inter', sans-serif; color: #1e2a3a; cursor: pointer; height: 34px; }
-    input[type="date"] { min-width: 135px; }
-    .date-range { display: flex; align-items: center; gap: 6px; }
-    .date-range span { font-size: 12px; color: #9ca3af; }
-
-    /* PAGE TABS */
-    .page-tabs { background: #fff; border-bottom: 1px solid #e5e8ee; padding: 0 28px; display: flex; gap: 0; position: sticky; top: 108px; z-index: 8; }
-    .page-tab { padding: 12px 20px; font-size: 13px; font-weight: 500; color: #9ca3af; cursor: pointer; border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s; white-space: nowrap; }
-    .page-tab:hover { color: #1e2a3a; }
-    .page-tab.active { color: #3b82f6; border-bottom-color: #3b82f6; }
-
-    /* CONTENT */
-    .content { padding: 24px 28px; flex: 1; overflow-y: auto; }
-    .page { display: none; }
-    .page.active { display: block; }
-
-    /* KPI */
-    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
-    .kpi { background: #fff; border: 1px solid #e5e8ee; border-radius: 10px; padding: 16px 20px; position: relative; overflow: hidden; }
-    .kpi::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
-    .kpi:nth-child(1)::after { background: #3b82f6; }
-    .kpi:nth-child(2)::after { background: #10b981; }
-    .kpi:nth-child(3)::after { background: #8b5cf6; }
-    .kpi:nth-child(4)::after { background: #f59e0b; }
-    .kpi .label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; margin-bottom: 6px; }
-    .kpi .value { font-size: 22px; font-weight: 700; color: #1e2a3a; }
-    .kpi .sub { font-size: 11px; color: #9ca3af; margin-top: 2px; }
-
-    /* CHARTS */
-    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-    .card { background: #fff; border: 1px solid #e5e8ee; border-radius: 10px; padding: 20px; }
-    .card h2 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: #9ca3af; margin-bottom: 14px; }
-    .chart-wrap { position: relative; width: 100%; height: 200px; }
-    .chart-wrap-tall { position: relative; width: 100%; height: 260px; }
-    .legend { display: flex; gap: 14px; margin-bottom: 10px; font-size: 11px; color: #9ca3af; flex-wrap: wrap; }
-    .legend span { display: flex; align-items: center; gap: 5px; }
-    .legend .dot { width: 10px; height: 10px; border-radius: 2px; }
-
-    /* TABLES */
-    .full-card { background: #fff; border: 1px solid #e5e8ee; border-radius: 10px; padding: 20px; margin-bottom: 16px; }
-    .full-card h2 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: #9ca3af; margin-bottom: 14px; }
-    .table-wrap { overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 240px); }
-    table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }
-    th { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e5e8ee; color: #9ca3af; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; background: #fafafa; position: sticky; top: 0; z-index: 2; }
-    #table-detail table th:nth-child(1), #table-detail table td:nth-child(1) { position: sticky; left: 0; z-index: 1; background: #fff; }
-    #table-detail table th:nth-child(2), #table-detail table td:nth-child(2) { position: sticky; left: 90px; z-index: 1; background: #fff; box-shadow: 2px 0 4px -2px rgba(0,0,0,0.08); }
-    #table-detail table th:nth-child(1), #table-detail table th:nth-child(2) { z-index: 3; background: #fafafa; }
-    td { padding: 8px 10px; border-bottom: 0.5px solid #f3f4f6; color: #1e2a3a; }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: #f9fafb; }
-    .badge { display: inline-block; padding: 3px 10px; border-radius: 5px; font-size: 11px; font-weight: 500; }
-    .badge.green  { background: #d1fae5; color: #065f46; }
-    .badge.red    { background: #fee2e2; color: #991b1b; }
-    .badge.gray   { background: #f3f4f6; color: #6b7280; }
-    .badge.blue   { background: #dbeafe; color: #1d4ed8; }
-    .badge.purple { background: #ede9fe; color: #6d28d9; }
-    .btn-export { display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:7px;border:1px solid #e5e8ee;background:#fff;font-size:12px;font-weight:500;color:#374151;cursor:pointer;transition:background 0.15s; }
-    .btn-export:hover { background:#f9fafb; }
-
-    @media (max-width: 900px) {
-      .sidebar { display: none; }
-      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-      .charts-grid { grid-template-columns: 1fr; }
-    }
-  </style>
-</head>
-<body>
-
-</div>
+loadData();
+</script>
 </body>
 </html>

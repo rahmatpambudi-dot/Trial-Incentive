@@ -347,6 +347,7 @@
 
 <script>
 const LC_CSV = 'data/lc_data.csv';
+const PAIRED_CSV = 'data/paired_data.csv';
 const OT_CSV = 'data/ot_data.csv';
 const KLS_HO_CSV = 'data/kls_ho_data.csv';
 const TARIKAN_KLL_CSV = 'data/tarikan_kll_data.csv';
@@ -1388,6 +1389,41 @@ function renderAnomali() {
 }
 async function loadData() {
   try {
+    // Try paired_data.csv first (fast, pre-processed)
+    const pairedRes = await fetch(PAIRED_CSV+'?t='+Date.now()).catch(()=>null);
+    if (pairedRes && pairedRes.ok) {
+      const pairedText = await pairedRes.text();
+      const rawPaired = Papa.parse(pairedText,{header:true,skipEmptyLines:true}).data;
+      if (rawPaired.length > 0) {
+        pairedData = rawPaired.map(r => ({
+          empId:r.empId, empName:r.empName, otDate:r.otDate,
+          otJam:parseFloat(r.otJam)||0,
+          biayaOT:parseFloat(r.biayaOT)||0,
+          bu:r.bu, siteBu:r.siteBU, desc:r.desc,
+          lcNo:r.lcNo, matchMethod:r.matchMethod,
+          kategoriOT:r.kategoriOT, jalur:r.jalur, armada:r.armada,
+          aktualDP:r.aktualDP!==''?parseFloat(r.aktualDP):null,
+          tat:r.tat, owner:r.owner,
+          delivType:r.kategoriOT==='RITASE'?'Ritase':r.kategoriOT==='LANGSIR'?'Langsiran':null,
+          isRitase:r.kategoriOT==='RITASE',
+          isLangsir:r.kategoriOT==='LANGSIR',
+          stdDP:null, gapDP:null, gapTAT:null, totalTAT:null,
+          ritLCs:[], ritTATs:[]
+        }));
+        window._rawLC = []; window._rawOT = rawPaired; window._rawKlsHo = []; window._rawKLL = [];
+        setDateRangeBounds(pairedData);
+        populateFilters(pairedData);
+        setTimeout(() => { renderAll(); }, 100);
+        const dates = pairedData.map(r=>r.otDate).filter(Boolean).sort();
+        const maxDate = dates[dates.length-1];
+        document.getElementById('badge-data-range').textContent = '📅 ' + (pairedData[0]?.otDate||'') + ' — ' + (maxDate||'');
+        document.getElementById('badge-update').innerHTML = '● Update: ' + (maxDate||'').split('-').reverse().join('/');
+        document.getElementById('badge-update').style.background = '#e8f5f0';
+        document.getElementById('badge-update').style.color = '#0f6e56';
+        return;
+      }
+    }
+    // Fallback: load LC + OT terpisah
     const [lcRes, otRes, klsHoRes, kllRes] = await Promise.all([
       fetch(LC_CSV+'?t='+Date.now()),
       fetch(OT_CSV+'?t='+Date.now()),

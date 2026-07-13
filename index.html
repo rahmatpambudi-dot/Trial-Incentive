@@ -1384,6 +1384,16 @@ function renderAnomali() {
   h3 += '</tbody></table>';
   document.getElementById('table-unmatch').innerHTML = unmatch.length ? h3 : '<div style="text-align:center;padding:1.5rem;color:#9ca3af;font-size:13px">Semua OT terpair ✓</div>';
 }
+let _filterListenersAttached = false;
+function attachFilterListeners() {
+  if (_filterListenersAttached) return; // hindari double-attach
+  ['filter-date-from','filter-date-to','filter-bu','filter-jalur','filter-delivery','filter-kategori','filter-scenario','filter-ot-source'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', renderAll);
+  });
+  _filterListenersAttached = true;
+}
+
 async function loadData() {
   try {
     // Try paired_data.csv first (fast, pre-processed)
@@ -1446,6 +1456,7 @@ async function loadData() {
         window._usingPairedCsv = true;
         setDateRangeBounds(pairedData);
         populateFilters(pairedData);
+        attachFilterListeners();
         setTimeout(() => { renderAll(); }, 100);
         const dates = pairedData.map(r=>r.otDate).filter(Boolean).sort();
         const maxDate = dates[dates.length-1];
@@ -1491,9 +1502,7 @@ async function loadData() {
     populateFilters(pairedData);
     // Render active page after data fully loaded
     setTimeout(() => { renderAll(); }, 100);
-    ['filter-date-from','filter-date-to','filter-bu','filter-jalur','filter-delivery','filter-kategori','filter-scenario','filter-ot-source'].forEach(id => {
-      document.getElementById(id).addEventListener('change', renderAll);
-    });
+    attachFilterListeners();
   } catch(e) {
     document.getElementById('badge-update').innerHTML = '⚠️ ' + e.message;
     document.getElementById('badge-update').style.background = '#fee2e2';

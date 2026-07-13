@@ -1392,21 +1392,56 @@ async function loadData() {
       const pairedText = await pairedRes.text();
       const rawPaired = Papa.parse(pairedText,{header:true,skipEmptyLines:true}).data;
       if (rawPaired.length > 0) {
-        pairedData = rawPaired.map(r => ({
-          empId:r.empId, empName:r.empName, otDate:r.otDate,
-          otJam:parseFloat(r.otJam)||0,
-          biayaOT:parseFloat(r.biayaOT)||0,
-          bu:r.bu, siteBu:r.siteBU, desc:r.desc,
-          lcNo:r.lcNo, matchMethod:r.matchMethod,
-          kategoriOT:r.kategoriOT, jalur:r.jalur, armada:r.armada,
-          aktualDP:r.aktualDP!==''?parseFloat(r.aktualDP):null,
-          tat:r.tat, owner:r.owner,
-          delivType:r.kategoriOT==='RITASE'?'Ritase':r.kategoriOT==='LANGSIR'?'Langsiran':null,
-          isRitase:r.kategoriOT==='RITASE',
-          isLangsir:r.kategoriOT==='LANGSIR',
-          stdDP:null, gapDP:null, gapTAT:null, totalTAT:null,
-          ritLCs:[], ritTATs:[]
-        }));
+        pairedData = rawPaired.map(r => {
+          const otJam = parseFloat(r.otJam)||0;
+          const biayaOT = parseFloat(r.biayaOT)||0;
+          const aktualDP = r.aktualDP!==''&&r.aktualDP!=null ? parseFloat(r.aktualDP) : null;
+          const kat = (r.kategoriOT||'').trim().toUpperCase();
+          const isRitase = kat === 'RITASE';
+          const isLangsir = kat === 'LANGSIR';
+          const jalur = r.jalur||'';
+          const armada = (r.armada||'').toUpperCase();
+          const isBesar = ['FUSO','WINGBOX','CONT-40'].some(b=>armada.includes(b));
+          const lc7 = (r.lcNo||'')[6]?.toUpperCase();
+
+          let delivType, stdDP=null, gapDP=null, gapTAT=null, totalTAT=null;
+
+          if (isRitase) {
+            delivType = 'Ritase';
+            const tatH = tatToHours(r.tat);
+            totalTAT = (tatH && tatH<=24) ? tatH : null;
+            gapTAT = totalTAT !== null ? totalTAT - 8.0 : null;
+          } else if (isLangsir) {
+            delivType = 'Langsiran';
+            const rits = extractRitLCs(r.desc||'');
+            const aktualTrip = rits.length;
+            const d = (r.desc||'').toUpperCase();
+            const STD_TRIP = {'DC 10':4,'DC10':4,'DC 5':4,'DC5':4,'JURONG':3,'KITTIC':2,'KITIC':2,'DELTA 8':2,'DELTA8':2};
+            let stdTrip = null;
+            for (const [k,v] of Object.entries(STD_TRIP)) { if(d.includes(k)){stdTrip=v;break;} }
+            stdDP = stdTrip;
+            gapTAT = stdTrip!==null ? aktualTrip - stdTrip : null;
+            totalTAT = aktualTrip;
+          } else {
+            const STD_CUST = {'Bekasi':7,'Karawang Selatan':7,'Jakarta Timur':6,'Jakarta Selatan':5,'Jakarta Utara':5,'Jakarta Barat':5,'Jakarta Pusat':5,'Karawang Utara':5,'Purwakarta':5,'Depok':4,'Bogor':4,'Tangerang':2};
+            const STD_SK = {'Bekasi':4,'Karawang Selatan':4,'Jakarta Timur':3,'Jakarta Selatan':3,'Jakarta Barat':3,'Jakarta Pusat':3,'Karawang Utara':3,'Purwakarta':3,'Jakarta Utara':2,'Depok':2,'Bogor':2,'Tangerang':1};
+            const STD_SB = {'Bekasi':2,'Karawang Selatan':2,'Jakarta Timur':2,'Jakarta Selatan':1,'Jakarta Utara':1,'Jakarta Barat':1,'Jakarta Pusat':1,'Karawang Utara':1,'Purwakarta':1,'Depok':1,'Bogor':1,'Tangerang':1};
+            if (lc7==='C') { delivType='Customer'; stdDP=STD_CUST[jalur]||null; }
+            else if (['A','B','D','S'].includes(lc7)) { delivType='Store'; stdDP=isBesar?(STD_SB[jalur]||null):(STD_SK[jalur]||null); }
+            else delivType = r.kategoriOT||null;
+            gapDP = (aktualDP!=null && stdDP!=null) ? aktualDP-stdDP : null;
+          }
+
+          return {
+            empId:r.empId, empName:r.empName, otDate:r.otDate,
+            otJam, biayaOT, bu:r.bu, siteBu:r.siteBU,
+            desc:r.desc, lcNo:r.lcNo, matchMethod:r.matchMethod,
+            kategoriOT:r.kategoriOT, jalur, armada, delivType,
+            stdDP, aktualDP, gapDP, tat:r.tat,
+            isRitase, isLangsir, gapTAT, totalTAT,
+            ritLCs:[], ritTATs:[]
+          };
+        });
         window._rawLC = []; window._rawOT = rawPaired; window._rawKlsHo = []; window._rawKLL = [];
         setDateRangeBounds(pairedData);
         populateFilters(pairedData);

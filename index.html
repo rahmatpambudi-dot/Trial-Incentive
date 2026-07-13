@@ -1160,7 +1160,7 @@ function renderPageJalur(data, rate) {
 function renderAll() {
   // Re-pair kalau sumber OT berubah
   const src = document.getElementById('filter-ot-source').value;
-  if (window._rawLC && window._rawOT) {
+  if (!window._usingPairedCsv && window._rawLC && window._rawLC.length && window._rawOT) {
     const activeOT = src === 'tarikan_kll' ? (window._rawKLL||[]) : window._rawOT;
     pairedData = pairData(window._rawLC, activeOT, window._rawKlsHo||[]);
     // Update date bounds sesuai data aktif
@@ -1443,6 +1443,7 @@ async function loadData() {
           };
         });
         window._rawLC = []; window._rawOT = rawPaired; window._rawKlsHo = []; window._rawKLL = [];
+        window._usingPairedCsv = true;
         setDateRangeBounds(pairedData);
         populateFilters(pairedData);
         setTimeout(() => { renderAll(); }, 100);
@@ -1481,6 +1482,7 @@ async function loadData() {
     window._rawOT = rawOT;
     window._rawKlsHo = rawKlsHo;
     window._rawKLL = rawKLL;
+    window._usingPairedCsv = false;
 
     const src = document.getElementById('filter-ot-source').value;
     const activeOT = src === 'tarikan_kll' ? rawKLL : rawOT;
